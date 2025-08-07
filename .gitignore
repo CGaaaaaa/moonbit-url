@@ -17,5 +17,12 @@ build/
 *.tmp
 temp/
 
+# Coverage reports
+coverage.html/
+coverage/
+htmlcov/
+.coverage
+*.lcov
+
 # Operating system files
 Thumbs.db

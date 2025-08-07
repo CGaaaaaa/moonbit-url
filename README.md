@@ -1,5 +1,9 @@
 # MoonBit URI Library
 
+[![CI](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml/badge.svg)](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/consingliu/moonbit-uri)](LICENSE)
+[![MoonBit](https://img.shields.io/badge/MoonBit-compatible-blue)](https://www.moonbitlang.com/)
+
 English | [简体中文](README_zh_CN.md)
 
 A comprehensive and RFC 3986 compliant URI parsing and manipulation library for MoonBit, featuring advanced URI operations, percent encoding, reference resolution, and much more.

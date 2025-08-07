@@ -1,5 +1,9 @@
 # MoonBit URI 库
 
+[![CI](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml/badge.svg)](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/consingliu/moonbit-uri)](LICENSE)
+[![MoonBit](https://img.shields.io/badge/MoonBit-compatible-blue)](https://www.moonbitlang.com/)
+
 [English](README.md) | **简体中文**
 
 一个全面且符合 RFC 3986 标准的 MoonBit URI 解析和操作库，提供高级 URI 操作、百分号编码、引用解析等丰富功能。

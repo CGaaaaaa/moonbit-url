@@ -1,8 +1,6 @@
 # MoonBit URI 库
 
-[![CI](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml/badge.svg)](https://github.com/consingliu/moonbit-uri/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/consingliu/moonbit-uri)](LICENSE)
-[![MoonBit](https://img.shields.io/badge/MoonBit-compatible-blue)](https://www.moonbitlang.com/)
+
 
 [English](README.md) | **简体中文**
 

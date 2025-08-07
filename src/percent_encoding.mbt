@@ -1,6 +1,6 @@
 /// 简化的百分号编码实现
 
-/// 编码集合类型
+///| 编码集合类型
 pub enum EncodeSet {
   Component
   Query
@@ -8,7 +8,7 @@ pub enum EncodeSet {
   UserInfo
 }
 
-/// 百分号编码字符串
+///| 百分号编码字符串
 pub fn percent_encode(input : String, _encode_set : EncodeSet) -> String {
   // 简化实现 - 只编码空格
   let mut result = ""
@@ -23,13 +23,13 @@ pub fn percent_encode(input : String, _encode_set : EncodeSet) -> String {
   result
 }
 
-/// 百分号解码字符串
+///| 百分号解码字符串
 pub fn percent_decode(input : String) -> Result[String, String] {
   // 简化实现 - 只解码 %20
   let mut result = ""
   let mut i = 0
   while i < input.length() {
-    if i + 2 < input.length() && input.substring(start=i, end=i+3) == "%20" {
+    if i + 2 < input.length() && input.substring(start=i, end=i + 3) == "%20" {
       result = result + " "
       i = i + 3
     } else {
@@ -40,7 +40,7 @@ pub fn percent_decode(input : String) -> Result[String, String] {
   Ok(result)
 }
 
-/// 编码URL查询参数
+///| 编码URL查询参数
 pub fn encode_query_param(input : String) -> String {
   let mut result = ""
   for i = 0; i < input.length(); i = i + 1 {
@@ -60,7 +60,7 @@ pub fn encode_query_param(input : String) -> String {
   result
 }
 
-/// 解码URL查询参数
+///| 解码URL查询参数
 pub fn decode_query_param(input : String) -> Result[String, String] {
   // 简化实现
   let mut result = ""
@@ -69,13 +69,16 @@ pub fn decode_query_param(input : String) -> Result[String, String] {
     if input[i] == Char::to_int('+') {
       result = result + " "
       i = i + 1
-    } else if i + 2 < input.length() && input.substring(start=i, end=i+3) == "%26" {
+    } else if i + 2 < input.length() &&
+      input.substring(start=i, end=i + 3) == "%26" {
       result = result + "&"
       i = i + 3
-    } else if i + 2 < input.length() && input.substring(start=i, end=i+3) == "%2B" {
+    } else if i + 2 < input.length() &&
+      input.substring(start=i, end=i + 3) == "%2B" {
       result = result + "+"
       i = i + 3
-    } else if i + 2 < input.length() && input.substring(start=i, end=i+3) == "%3D" {
+    } else if i + 2 < input.length() &&
+      input.substring(start=i, end=i + 3) == "%3D" {
       result = result + "="
       i = i + 3
     } else {
@@ -86,28 +89,28 @@ pub fn decode_query_param(input : String) -> Result[String, String] {
   Ok(result)
 }
 
-/// 验证百分号编码的字符串是否有效
+///| 验证百分号编码的字符串是否有效
 pub fn validate_percent_encoded(_input : String) -> Result[Unit, String] {
   // 简化实现
   Ok(())
 }
 
-/// URI安全编码
+///| URI安全编码
 pub fn uri_safe_encode(input : String) -> String {
   percent_encode(input, Component)
 }
 
-/// 编码完整的URI路径
+///| 编码完整的URI路径
 pub fn encode_path(path : String) -> String {
   percent_encode(path, PathSegment)
 }
 
-/// 编码查询字符串
+///| 编码查询字符串
 pub fn encode_query_string(query : String) -> String {
   percent_encode(query, Query)
 }
 
-/// 编码用户信息
+///| 编码用户信息
 pub fn encode_userinfo(userinfo : String) -> String {
   percent_encode(userinfo, UserInfo)
 }

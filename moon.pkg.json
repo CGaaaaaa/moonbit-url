@@ -1,0 +1,10 @@
+{
+  "name": "consingliu/uri",
+  "version": "1.0.0",
+  "repository": "https://github.com/consingliu/moonbit-uri",
+  "license": "MIT",
+  "description": "RFC3986 compliant URI parser and constructor for MoonBit",
+  "keywords": ["uri", "url", "rfc3986", "parser", "web"],
+  "authors": ["consingliu"],
+  "readme": "README.md"
+}

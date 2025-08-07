@@ -1,0 +1,21 @@
+# MoonBit build artifacts
+target/
+build/
+*.coverage
+*.cov
+
+# IDE and system files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary and log files
+*.log
+*.tmp
+temp/
+
+# Operating system files
+Thumbs.db

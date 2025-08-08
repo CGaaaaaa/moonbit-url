@@ -3,8 +3,6 @@
 ///| 查询参数编码方式
 pub enum QueryEncoding {
   Percent
-  FormUrlEncoded
-  None
 }
 
 ///| 构建器配置选项
@@ -141,6 +139,14 @@ pub fn UriBuilder::query_param(
   self
 }
 
+///| 添加布尔查询参数（仅当值为true时）
+pub fn UriBuilder::query_param_bool(self : UriBuilder, key : String, value : Bool) -> UriBuilder {
+  if value {
+    self.query_params.push((key, "true"))
+  }
+  self
+}
+
 ///| 添加多个查询参数
 pub fn UriBuilder::query_params(
   self : UriBuilder,
@@ -164,28 +170,16 @@ pub fn UriBuilder::query_param_if_not_empty(
   self
 }
 
-///| 添加布尔查询参数
-pub fn UriBuilder::query_param_bool(
-  self : UriBuilder,
-  key : String,
-  condition : Bool,
-) -> UriBuilder {
-  if condition {
-    self.query_params.push((key, ""))
-  }
-  self
-}
 
-///| 移除指定键的查询参数
-pub fn UriBuilder::remove_query_param(
-  self : UriBuilder,
-  key : String,
-) -> UriBuilder {
-  let filtered_params : Array[(String, String)] = []
-  for i = 0; i < self.query_params.length(); i = i + 1 {
-    let (k, v) = self.query_params[i]
-    if k != key {
-      filtered_params.push((k, v))
+
+
+
+///| 移除指定的查询参数
+pub fn UriBuilder::remove_query_param(self : UriBuilder, key : String) -> UriBuilder {
+  let filtered_params = []
+  for param in self.query_params {
+    if param.0 != key {
+      filtered_params.push(param)
     }
   }
   { ..self, query_params: filtered_params }
@@ -196,14 +190,7 @@ pub fn UriBuilder::clear_query_params(self : UriBuilder) -> UriBuilder {
   { ..self, query_params: [] }
 }
 
-///| 设置查询参数编码方式
-pub fn UriBuilder::query_encoding(
-  self : UriBuilder,
-  encoding : QueryEncoding,
-) -> UriBuilder {
-  let new_options = { ..self.options, query_encoding: encoding }
-  { ..self, options: new_options }
-}
+
 
 ///| 构建URI
 pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
@@ -224,10 +211,10 @@ pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
   }
 
   // 构建路径
-  let path = build_path_for_scheme_and_authority(
+  let path = build_path_unified(
     self.path_segments,
     scheme,
-    authority.is_some(),
+    authority is Some(_),
   )
 
   // 构建查询字符串
@@ -240,7 +227,7 @@ pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
   Ok(uri)
 }
 
-///| 构建并返回URI字符串
+///| 构建URI并返回字符串
 pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
   match self.build() {
     Ok(uri) => Ok(uri.to_string())
@@ -248,15 +235,19 @@ pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
   }
 }
 
+
+
+
+
 ///| 克隆构建器
 pub fn UriBuilder::clone(self : UriBuilder) -> UriBuilder {
   {
     scheme: self.scheme,
-    userinfo: self.userinfo,
     host: self.host,
     port: self.port,
-    path_segments: copy_array(self.path_segments),
-    query_params: copy_array(self.query_params),
+    userinfo: self.userinfo,
+    path_segments: self.path_segments.copy(),
+    query_params: self.query_params.copy(),
     fragment: self.fragment,
     options: self.options,
   }
@@ -306,30 +297,30 @@ pub fn UriBuilder::from_string(
   }
 }
 
+///| 通用URL构建器创建函数
+fn create_url_builder(scheme : String, host : String?, path : String) -> UriBuilder {
+  let mut builder = UriBuilder::new().scheme(scheme)
+  match host {
+    Some(h) => builder = builder.host(h)
+    None => ()
+  }
+  if path.length() > 0 {
+    builder = builder.path(path)
+  }
+  builder
+}
+
 ///| 创建HTTP URL构建器
 pub fn http_url(host : String, path : String) -> UriBuilder {
-  UriBuilder::new().scheme("http").host(host).path(path)
+  create_url_builder("http", Some(host), path)
 }
 
 ///| 创建HTTPS URL构建器
 pub fn https_url(host : String, path : String) -> UriBuilder {
-  UriBuilder::new().scheme("https").host(host).path(path)
+  create_url_builder("https", Some(host), path)
 }
 
-///| 创建FTP URL构建器
-pub fn ftp_url(host : String, path : String) -> UriBuilder {
-  UriBuilder::new().scheme("ftp").host(host).path(path)
-}
 
-///| 创建文件URI构建器
-pub fn file_uri(path : String) -> UriBuilder {
-  UriBuilder::new().scheme("file").path(path)
-}
-
-///| 创建邮件URI构建器
-pub fn mailto_uri(email : String) -> UriBuilder {
-  UriBuilder::new().scheme("mailto").path(email)
-}
 
 // ==================== 辅助函数 ====================
 
@@ -363,43 +354,11 @@ fn parse_path_segments(path : String) -> Array[String] {
   segments
 }
 
-///| 构建路径字符串
-fn build_path(segments : Array[String]) -> String {
-  if segments.length() == 0 {
-    return ""
-  }
-  "/" + segments.join("/")
-}
-
-///| 根据scheme构建路径字符串
-fn build_path_for_scheme(segments : Array[String], scheme : String) -> String {
-  // 检查是否是显式的空路径
-  if segments.length() == 1 && segments[0] == "" {
-    return ""
-  }
-
-  // 对于特殊scheme，路径不需要前导斜杠
-  if scheme == "mailto" || scheme == "tel" || scheme == "urn" {
-    if segments.length() == 0 {
-      return ""
-    }
-    return segments.join("/")
-  }
-
-  // 对于HTTP等scheme，空路径应该是"/"
-  if segments.length() == 0 {
-    return "/"
-  }
-
-  // 对于HTTP等scheme，需要前导斜杠
-  "/" + segments.join("/")
-}
-
-///| 根据scheme和authority构建路径字符串
-fn build_path_for_scheme_and_authority(
+///| 统一的路径构建函数
+fn build_path_unified(
   segments : Array[String],
   scheme : String,
-  has_authority : Bool,
+  has_authority : Bool
 ) -> String {
   // 检查是否是显式的空路径
   if segments.length() == 1 && segments[0] == "" {
@@ -411,8 +370,8 @@ fn build_path_for_scheme_and_authority(
     return "/"
   }
 
-  // 对于特殊scheme，路径不需要前导斜杠
-  if scheme == "mailto" || scheme == "tel" || scheme == "urn" {
+  // 对于特殊scheme（不需要authority），路径不需要前导斜杠
+  if scheme == "mailto" || scheme == "tel" || scheme == "urn" || scheme == "data" {
     if segments.length() == 0 {
       return ""
     }
@@ -424,81 +383,25 @@ fn build_path_for_scheme_and_authority(
     return ""
   }
 
-  // 对于HTTP等scheme，空路径应该是"/"
-  if segments.length() == 0 {
-    return "/"
+  // 对于没有authority的URI，空路径保持为空
+  if segments.length() == 0 && !has_authority {
+    return ""
   }
 
   // 对于HTTP等scheme，需要前导斜杠
-  "/" + segments.join("/")
+  if segments.length() > 0 {
+    "/" + segments.join("/")
+  } else {
+    "/"
+  }
 }
 
-///| 构建查询字符串
-fn build_query_string(params : Array[(String, String)]) -> String {
-  let parts : Array[String] = []
-  for i = 0; i < params.length(); i = i + 1 {
-    let (key, value) = params[i]
-    if value.length() == 0 {
-      parts.push(key)
-    } else {
-      parts.push(key + "=" + value)
-    }
-  }
-  parts.join("&")
-}
 
-///| 解析查询字符串
-fn parse_query_string(query : String) -> Array[(String, String)] {
-  if query.length() == 0 {
-    return []
-  }
-  let params : Array[(String, String)] = []
-  let pairs = split_string(query, '&')
-  for pair in pairs {
-    match find_char(pair, '=') {
-      Some(pos) => {
-        let key = pair.substring(start=0, end=pos)
-        let value = pair.substring(start=pos + 1)
-        params.push((key, value))
-      }
-      None => params.push((pair, ""))
-    }
-  }
-  params
-}
 
-///| 复制数组
-fn[T] copy_array(arr : Array[T]) -> Array[T] {
-  let result : Array[T] = []
-  for item in arr {
-    result.push(item)
-  }
-  result
-}
 
-///| 分割字符串
-fn split_string(s : String, delimiter : Char) -> Array[String] {
-  let parts : Array[String] = []
-  let mut current = ""
-  for i = 0; i < s.length(); i = i + 1 {
-    let char_code = s[i]
-    if char_code == Char::to_int(delimiter) {
-      parts.push(current)
-      current = ""
-    } else {
-      current = current + Char::to_string(Int::unsafe_to_char(char_code))
-    }
-  }
-  parts.push(current)
-  parts
-}
 
-///| 查找字符位置
-fn find_char(s : String, c : Char) -> Int? {
-  for i = 0; i < s.length(); i = i + 1 {
-    if s[i] == Char::to_int(c) {
-      return Some(i)
-    }
-  }
-  None
-}
+
+
+
+
+

@@ -1,42 +1,88 @@
 /// 简化的 URI 引用解析实现
 
-///| 解析引用，将相对引用与基URI结合
+///| 获取路径的父目录
+fn get_parent_path(path : String) -> String {
+  let mut last_slash = -1
+  for i = path.length() - 1; i >= 0; i = i - 1 {
+    if path[i] == Char::to_int('/') {
+      last_slash = i
+      break
+    }
+  }
+  if last_slash <= 0 { "/" } else { path.substring(start=0, end=last_slash) }
+}
+
+///| 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
 pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   // 验证基URI必须是绝对的
   if not(base.is_absolute()) {
     return Err(RelativeReferenceError("Base URI must be absolute"))
   }
 
-  // 如果引用是绝对URI，直接返回
-  if reference.is_absolute() {
-    return Ok(reference)
-  }
+  // RFC 3986 Section 5.2.2 - Transform References
+  let mut target_scheme = ""
+  let mut target_authority = None
+  let mut target_path = ""
+  let mut target_query = None
+  let mut target_fragment = None
 
-  // 简化的相对引用解析
-  let resolved_path = if reference.path.has_prefix("/") {
-    // 绝对路径，直接使用
-    reference.path
+  // 如果引用定义了scheme，则这是一个绝对引用
+  if is_not_empty(reference.scheme) {
+    target_scheme = reference.scheme
+    target_authority = reference.authority
+    target_path = remove_dot_segments(reference.path)
+    target_query = reference.query
   } else {
-    // 相对路径，与基路径合并
-    let base_parent = base.parent_path()
-    if base_parent.is_empty() {
-      "/" + reference.path
-    } else if reference.path.is_empty() {
-      base_parent
+    // 相对引用
+    if reference.authority is Some(_) {
+      target_authority = reference.authority
+      target_path = remove_dot_segments(reference.path)
+      target_query = reference.query
     } else {
-      base_parent + "/" + reference.path
+      // 没有权威部分
+      if is_empty(reference.path) {
+        target_path = base.path
+        if reference.query is Some(_) {
+          target_query = reference.query
+        } else {
+          target_query = base.query
+        }
+      } else {
+        if reference.path.has_prefix("/") {
+          target_path = remove_dot_segments(reference.path)
+        } else {
+          target_path = remove_dot_segments(merge_paths(base, reference.path))
+        }
+        target_query = reference.query
+      }
+      target_authority = base.authority
+    }
+    target_scheme = base.scheme
+  }
+  
+  target_fragment = reference.fragment
+
+  Ok({
+    scheme: target_scheme,
+    authority: target_authority,
+    path: target_path,
+    query: target_query,
+    fragment: target_fragment,
+  })
+}
+
+///| 合并路径（RFC 3986 Section 5.2.3）
+fn merge_paths(base : Uri, path : String) -> String {
+  if base.authority is Some(_) && is_empty(base.path) {
+    "/" + path
+  } else {
+    let base_parent = get_parent_path(base.path)
+    if is_empty(base_parent) {
+      path
+    } else {
+      base_parent + "/" + path
     }
   }
-
-  // 规范化路径，移除点段
-  let normalized_path = remove_dot_segments(resolved_path)
-  Ok({
-    scheme: base.scheme,
-    authority: base.authority,
-    path: normalized_path,
-    query: reference.query,
-    fragment: reference.fragment,
-  })
 }
 
 ///| 移除路径中的点段（RFC 3986标准实现）
@@ -46,7 +92,7 @@ pub fn remove_dot_segments(path : String) -> String {
   }
   let mut input = path
   let mut output = ""
-  while input.length() > 0 {
+  while is_not_empty(input) {
     let mut handled = false
 
     // A. 如果输入以 "../" 或 "./" 开头，移除这些前缀

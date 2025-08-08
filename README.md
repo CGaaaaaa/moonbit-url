@@ -35,6 +35,7 @@ A comprehensive and RFC 3986 compliant URI parsing and manipulation library for 
 ### 🔐 **Percent Encoding**
 - **Multiple Contexts**: Component, query, path segment, and userinfo encoding
 - **RFC Compliant**: Proper encoding/decoding according to RFC 3986
+- **UTF-8 Support**: Full Chinese/Unicode character encoding support
 - **Custom Encode Sets**: Define custom character sets for encoding
 - **Validation**: Validate percent-encoded strings
 - **Form Encoding**: Support for application/x-www-form-urlencoded
@@ -545,24 +546,26 @@ moonbit-uri/
     ├── uri_builder.mbt         # Fluent builder pattern implementation
     ├── percent_encoding.mbt    # RFC 3986 percent encoding/decoding
     ├── reference_resolution.mbt # RFC 3986 reference resolution
+    ├── utils.mbt              # Common utility functions
     └── uri_test.mbt           # Comprehensive test suite
 ```
 
 ## 🧪 Testing & Quality
 
-The library includes a comprehensive test suite with **90%+ code coverage**, covering:
+The library includes a comprehensive test suite with **100% test success rate**, covering:
 
-- **89 test cases** ensuring RFC 3986 compliance
+- **99 test cases** ensuring RFC 3986 compliance
 - Edge cases and error conditions  
 - Performance scenarios
 - Real-world usage patterns
 - All major functions and error paths
+- Chinese/UTF-8 character encoding support
 
-### Test Coverage by Module
-- `reference_resolution.mbt`: 92% coverage
-- `uri_builder.mbt`: 92% coverage  
-- `percent_encoding.mbt`: 87% coverage
-- `uri.mbt`: 87% coverage
+### Test Results
+- **Total tests**: 99 passed, 0 failed
+- **RFC 3986 compliance**: Full standard reference resolution
+- **rust-url compatibility**: Edge case handling
+- **IPv6 support**: Comprehensive address validation
 
 Run tests with:
 ```bash

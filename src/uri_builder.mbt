@@ -140,7 +140,11 @@ pub fn UriBuilder::query_param(
 }
 
 ///| 添加布尔查询参数（仅当值为true时）
-pub fn UriBuilder::query_param_bool(self : UriBuilder, key : String, value : Bool) -> UriBuilder {
+pub fn UriBuilder::query_param_bool(
+  self : UriBuilder,
+  key : String,
+  value : Bool,
+) -> UriBuilder {
   if value {
     self.query_params.push((key, "true"))
   }
@@ -170,12 +174,11 @@ pub fn UriBuilder::query_param_if_not_empty(
   self
 }
 
-
-
-
-
 ///| 移除指定的查询参数
-pub fn UriBuilder::remove_query_param(self : UriBuilder, key : String) -> UriBuilder {
+pub fn UriBuilder::remove_query_param(
+  self : UriBuilder,
+  key : String,
+) -> UriBuilder {
   let filtered_params = []
   for param in self.query_params {
     if param.0 != key {
@@ -189,8 +192,6 @@ pub fn UriBuilder::remove_query_param(self : UriBuilder, key : String) -> UriBui
 pub fn UriBuilder::clear_query_params(self : UriBuilder) -> UriBuilder {
   { ..self, query_params: [] }
 }
-
-
 
 ///| 构建URI
 pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
@@ -234,10 +235,6 @@ pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
     Err(e) => Err(e)
   }
 }
-
-
-
-
 
 ///| 克隆构建器
 pub fn UriBuilder::clone(self : UriBuilder) -> UriBuilder {
@@ -298,7 +295,11 @@ pub fn UriBuilder::from_string(
 }
 
 ///| 通用URL构建器创建函数
-fn create_url_builder(scheme : String, host : String?, path : String) -> UriBuilder {
+fn create_url_builder(
+  scheme : String,
+  host : String?,
+  path : String,
+) -> UriBuilder {
   let mut builder = UriBuilder::new().scheme(scheme)
   match host {
     Some(h) => builder = builder.host(h)
@@ -319,8 +320,6 @@ pub fn http_url(host : String, path : String) -> UriBuilder {
 pub fn https_url(host : String, path : String) -> UriBuilder {
   create_url_builder("https", Some(host), path)
 }
-
-
 
 // ==================== 辅助函数 ====================
 
@@ -358,7 +357,7 @@ fn parse_path_segments(path : String) -> Array[String] {
 fn build_path_unified(
   segments : Array[String],
   scheme : String,
-  has_authority : Bool
+  has_authority : Bool,
 ) -> String {
   // 检查是否是显式的空路径
   if segments.length() == 1 && segments[0] == "" {
@@ -371,7 +370,10 @@ fn build_path_unified(
   }
 
   // 对于特殊scheme（不需要authority），路径不需要前导斜杠
-  if scheme == "mailto" || scheme == "tel" || scheme == "urn" || scheme == "data" {
+  if scheme == "mailto" ||
+    scheme == "tel" ||
+    scheme == "urn" ||
+    scheme == "data" {
     if segments.length() == 0 {
       return ""
     }
@@ -395,13 +397,3 @@ fn build_path_unified(
     "/"
   }
 }
-
-
-
-
-
-
-
-
-
-

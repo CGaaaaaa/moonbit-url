@@ -16,11 +16,6 @@ pub fn EncodeSet::query() -> EncodeSet {
   Query
 }
 
-
-
-
-
-
 ///| 百分号编码字符串
 pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
   let mut result = ""
@@ -41,28 +36,26 @@ pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
 fn should_encode_ascii(char_code : Int, encode_set : EncodeSet) -> Bool {
   // ASCII字母数字字符永远不编码
   if (char_code >= 65 && char_code <= 90) || // A-Z
-     (char_code >= 97 && char_code <= 122) || // a-z
-     (char_code >= 48 && char_code <= 57) { // 0-9
+    (char_code >= 97 && char_code <= 122) || // a-z
+    (char_code >= 48 && char_code <= 57) { // 0-9
     return false
   }
-  
+
   // 根据编码集合决定哪些字符需要编码
   match encode_set {
-    Component => {
+    Component =>
       // RFC 3986 unreserved characters: ALPHA / DIGIT / "-" / "." / "_" / "~"
       char_code != 45 && char_code != 46 && char_code != 95 && char_code != 126
-    }
-    Query => {
+    Query =>
       // 查询参数允许更多字符，但仍需编码空格、&、=等
-      char_code == 32 || char_code == 38 || char_code == 61 || char_code == 43 || 
-      char_code < 32 || char_code > 126
-    }
+      char_code == 32 ||
+      char_code == 38 ||
+      char_code == 61 ||
+      char_code == 43 ||
+      char_code < 32 ||
+      char_code > 126
   }
 }
-
-
-
-
 
 ///| 百分号解码字符串
 pub fn percent_decode(input : String) -> Result[String, String] {
@@ -72,14 +65,16 @@ pub fn percent_decode(input : String) -> Result[String, String] {
     if i + 2 < input.length() && input[i] == Char::to_int('%') {
       let hex1 = input[i + 1]
       let hex2 = input[i + 2]
-      match (hex_char_to_int(Int::unsafe_to_char(hex1)), hex_char_to_int(Int::unsafe_to_char(hex2))) {
+      match
+        (
+          hex_char_to_int(Int::unsafe_to_char(hex1)),
+          hex_char_to_int(Int::unsafe_to_char(hex2)),
+        ) {
         (Some(h1), Some(h2)) => {
           result = result + Char::to_string(Int::unsafe_to_char(h1 * 16 + h2))
           i = i + 3
         }
-        _ => {
-          return Err("Invalid percent encoding at position " + i.to_string())
-        }
+        _ => return Err("Invalid percent encoding at position " + i.to_string())
       }
     } else {
       result = result + Char::to_string(Int::unsafe_to_char(input[i]))
@@ -89,12 +84,6 @@ pub fn percent_decode(input : String) -> Result[String, String] {
   Ok(result)
 }
 
-
-
-
-
-
-
 ///| 编码URL查询参数
 pub fn encode_query_param(input : String) -> String {
   let mut result = ""
@@ -103,10 +92,10 @@ pub fn encode_query_param(input : String) -> String {
     if char_code == Char::to_int(' ') {
       result = result + "+"
     } else if char_code == Char::to_int('+') ||
-              char_code == Char::to_int('&') ||
-              char_code == Char::to_int('=') ||
-              char_code == Char::to_int('%') ||
-              char_code > 127 { // 添加对中文等非ASCII字符的编码
+      char_code == Char::to_int('&') ||
+      char_code == Char::to_int('=') ||
+      char_code == Char::to_int('%') ||
+      char_code > 127 { // 添加对中文等非ASCII字符的编码
       result = result + "%" + byte_to_hex(char_code)
     } else {
       result = result + Char::to_string(Int::unsafe_to_char(char_code))
@@ -138,13 +127,17 @@ pub fn validate_percent_encoded(input : String) -> Result[Unit, String] {
       }
       let hex1 = input[i + 1]
       let hex2 = input[i + 2]
-      match (hex_char_to_int(Int::unsafe_to_char(hex1)), hex_char_to_int(Int::unsafe_to_char(hex2))) {
-        (Some(_), Some(_)) => {
-          i = i + 3
-        }
-        _ => {
-          return Err("Invalid hex digits in percent encoding at position " + i.to_string())
-        }
+      match
+        (
+          hex_char_to_int(Int::unsafe_to_char(hex1)),
+          hex_char_to_int(Int::unsafe_to_char(hex2)),
+        ) {
+        (Some(_), Some(_)) => i = i + 3
+        _ =>
+          return Err(
+            "Invalid hex digits in percent encoding at position " +
+            i.to_string(),
+          )
       }
     } else {
       i = i + 1
@@ -154,22 +147,34 @@ pub fn validate_percent_encoded(input : String) -> Result[Unit, String] {
 }
 
 ///| 验证并解码百分号编码的字符串，使用UriError错误类型
-pub fn validate_and_decode_percent_encoded(input : String) -> Result[String, UriError] {
+pub fn validate_and_decode_percent_encoded(
+  input : String,
+) -> Result[String, UriError] {
   let mut i = 0
   while i < input.length() {
     if input[i] == Char::to_int('%') {
       if i + 2 >= input.length() {
-        return Err(InvalidPercentEncoding("Incomplete percent encoding at position " + i.to_string()))
+        return Err(
+          InvalidPercentEncoding(
+            "Incomplete percent encoding at position " + i.to_string(),
+          ),
+        )
       }
       let hex1 = input[i + 1]
       let hex2 = input[i + 2]
-      match (hex_char_to_int(Int::unsafe_to_char(hex1)), hex_char_to_int(Int::unsafe_to_char(hex2))) {
-        (Some(_), Some(_)) => {
-          i = i + 3
-        }
-        _ => {
-          return Err(InvalidPercentEncoding("Invalid hex digits in percent encoding at position " + i.to_string()))
-        }
+      match
+        (
+          hex_char_to_int(Int::unsafe_to_char(hex1)),
+          hex_char_to_int(Int::unsafe_to_char(hex2)),
+        ) {
+        (Some(_), Some(_)) => i = i + 3
+        _ =>
+          return Err(
+            InvalidPercentEncoding(
+              "Invalid hex digits in percent encoding at position " +
+              i.to_string(),
+            ),
+          )
       }
     } else {
       // 检查字符是否有效
@@ -182,12 +187,10 @@ pub fn validate_and_decode_percent_encoded(input : String) -> Result[String, Uri
       }
     }
   }
-  
+
   // 如果验证通过，进行解码
   match percent_decode(input) {
     Ok(result) => Ok(result)
     Err(msg) => Err(InvalidPercentEncoding(msg))
   }
 }
-
-

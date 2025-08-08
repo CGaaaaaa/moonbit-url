@@ -45,13 +45,11 @@ pub fn parse_int(s : String) -> Int? {
   Some(result)
 }
 
-
-
-
-
 ///| 将字节转换为十六进制字符串
 pub fn byte_to_hex(byte : Int) -> String {
-  let hex_chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+  let hex_chars = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+  ]
   // 确保字节值在0-255范围内
   let safe_byte = byte % 256
   let positive_byte = if safe_byte < 0 { safe_byte + 256 } else { safe_byte }
@@ -73,8 +71,6 @@ pub fn hex_char_to_int(c : Char) -> Int? {
     None
   }
 }
-
-
 
 ///| 构建查询字符串
 pub fn build_query_string(params : Array[(String, String)]) -> String {
@@ -131,7 +127,6 @@ pub fn find_substring(s : String, sub : String) -> Int? {
   if sub.length() > s.length() {
     return None
   }
-  
   for i = 0; i <= s.length() - sub.length(); i = i + 1 {
     let mut match_found = true
     for j = 0; j < sub.length(); j = j + 1 {
@@ -174,8 +169,17 @@ pub fn is_unreserved_char(c : Char) -> Bool {
 
 ///| 检查字符是否为sub-delims字符（RFC 3986）
 pub fn is_sub_delim_char(c : Char) -> Bool {
-  c == '!' || c == '$' || c == '&' || c == '\'' || c == '(' || c == ')' ||
-  c == '*' || c == '+' || c == ',' || c == ';' || c == '='
+  c == '!' ||
+  c == '$' ||
+  c == '&' ||
+  c == '\'' ||
+  c == '(' ||
+  c == ')' ||
+  c == '*' ||
+  c == '+' ||
+  c == ',' ||
+  c == ';' ||
+  c == '='
 }
 
 ///| 获取scheme的默认端口号
@@ -211,7 +215,7 @@ pub fn is_not_empty(s : String) -> Bool {
   s.length() > 0
 }
 
-/// 将字符串转换为小写
+///| 将字符串转换为小写
 pub fn to_lowercase(s : String) -> String {
   let mut result = ""
   for i = 0; i < s.length(); i = i + 1 {

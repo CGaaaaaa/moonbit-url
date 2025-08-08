@@ -160,7 +160,8 @@ test "convenience_constructors" {
   }
 
   // File URI
-  match UriBuilder::new().scheme("file").path("/home/user/document.pdf").build() {
+  match
+    UriBuilder::new().scheme("file").path("/home/user/document.pdf").build() {
     Ok(uri) => {
       assert_eq(uri.scheme, "file")
       assert_eq(uri.path, "/home/user/document.pdf")
@@ -192,18 +193,17 @@ test "percent_encoding_chinese_support" {
   let simple_text = "hello world"
   let encoded = percent_encode(simple_text, EncodeSet::component())
   assert_eq(encoded, "hello%20world")
-  
+
   // 测试解码
   match percent_decode(encoded) {
     Ok(decoded) => assert_eq(decoded, simple_text)
     Err(_) => abort("Should decode basic characters")
   }
-  
+
   // 测试查询参数中的特殊字符
   let query_text = "key=value"
   let encoded_query = encode_query_param(query_text)
   assert_eq(encoded_query, "key%3Dvalue")
-  
   match decode_query_param(encoded_query) {
     Ok(decoded) => assert_eq(decoded, query_text)
     Err(_) => abort("Should decode query params")
@@ -216,12 +216,11 @@ test "percent_encoding_advanced_utf8" {
   let text_with_special = "hello world"
   let encoded = percent_encode(text_with_special, EncodeSet::component())
   assert_eq(encoded, "hello%20world")
-  
   match percent_decode(encoded) {
     Ok(decoded) => assert_eq(decoded, text_with_special)
     Err(_) => abort("Should handle basic encoding/decoding")
   }
-  
+
   // 测试查询参数特殊字符
   let query_text = "key=value&other=data"
   let encoded_query = percent_encode(query_text, EncodeSet::query())
@@ -235,13 +234,12 @@ test "percent_encoding_validation" {
     Ok(_) => () // 预期成功
     Err(_) => abort("Valid percent encoding should pass validation")
   }
-  
+
   // 测试无效的百分号编码
   match validate_percent_encoded("hello%2") {
     Ok(_) => abort("Incomplete percent encoding should fail")
     Err(_) => () // 预期失败
   }
-  
   match validate_percent_encoded("hello%ZZ") {
     Ok(_) => abort("Invalid hex digits should fail")
     Err(_) => () // 预期失败
@@ -252,14 +250,13 @@ test "percent_encoding_validation" {
 test "ipv6_support_comprehensive" {
   // 测试各种IPv6地址格式
   let ipv6_uris = [
-    "http://[::1]/",                          // 回环地址
-    "https://[2001:db8::1]:8080/path",       // 完整IPv6地址
-    "ftp://[::ffff:192.0.2.1]/",            // IPv4映射地址
-    "http://[2001:db8:85a3::8a2e:370:7334]/", // 长IPv6地址
-    "https://[::]/test",                      // 全零地址
-    "http://[fe80::1%lo0]:3000/",            // 带区域ID的地址
+    "http://[::1]/", // 回环地址
+     "https://[2001:db8::1]:8080/path", // 完整IPv6地址
+     "ftp://[::ffff:192.0.2.1]/", // IPv4映射地址
+     "http://[2001:db8:85a3::8a2e:370:7334]/", // 长IPv6地址
+     "https://[::]/test", // 全零地址
+     "http://[fe80::1%lo0]:3000/", // 带区域ID的地址
   ]
-  
   for uri_str in ipv6_uris {
     match Uri::parse(uri_str) {
       Ok(uri) => {
@@ -268,22 +265,20 @@ test "ipv6_support_comprehensive" {
         assert_eq(host.has_prefix("["), true)
         assert_eq(host.has_suffix("]"), true)
       }
-      Err(_) => {
+      Err(_) =>
         // 某些复杂格式可能不支持，这也是可接受的
         println("Complex IPv6 format not supported: " + uri_str)
-      }
     }
   }
-  
+
   // 测试无效的IPv6地址
   let invalid_ipv6_uris = [
-    "http://[::1/",           // 缺少右括号
-    "http://[invalid]/",      // 无效字符
-    "http://[::1::2]/",       // 多个双冒号
-    "http://[::1:]/",         // 以冒号结尾
-    "http://[:1::]/",         // 以冒号开头
+    "http://[::1/", // 缺少右括号
+     "http://[invalid]/", // 无效字符
+     "http://[::1::2]/", // 多个双冒号
+     "http://[::1:]/", // 以冒号结尾
+     "http://[:1::]/", // 以冒号开头
   ]
-  
   for invalid_uri in invalid_ipv6_uris {
     match Uri::parse(invalid_uri) {
       Ok(_) => abort("Invalid IPv6 address should fail: " + invalid_uri)
@@ -295,7 +290,7 @@ test "ipv6_support_comprehensive" {
 ///|
 test "ipv6_uri_builder_support" {
   // 测试通过UriBuilder创建IPv6 URI
-  match 
+  match
     UriBuilder::new()
     .scheme("https")
     .host("[2001:db8::1]")
@@ -310,17 +305,12 @@ test "ipv6_uri_builder_support" {
     }
     Err(_) => abort("Should build IPv6 URI")
   }
-  
+
   // 测试不带方括号的IPv6地址（应该会出错或自动添加）
-  match 
-    UriBuilder::new()
-    .scheme("http")
-    .host("::1")
-    .build() {
-    Ok(uri) => {
+  match UriBuilder::new().scheme("http").host("::1").build() {
+    Ok(uri) =>
       // 如果成功，检查是否正确处理
       assert_eq(uri.host(), Some("::1"))
-    }
     Err(_) => () // 可能需要显式的方括号
   }
 }
@@ -1236,7 +1226,12 @@ test "uri_builder_convenience_constructors" {
   }
 
   // FTP URL
-  match UriBuilder::new().scheme("ftp").host("ftp.example.com").path("/files").build() {
+  match
+    UriBuilder::new()
+    .scheme("ftp")
+    .host("ftp.example.com")
+    .path("/files")
+    .build() {
     Ok(uri) => {
       assert_eq(uri.scheme(), "ftp")
       assert_eq(uri.host(), Some("ftp.example.com"))
@@ -1246,7 +1241,8 @@ test "uri_builder_convenience_constructors" {
   }
 
   // File URI
-  match UriBuilder::new().scheme("file").path("/home/user/document.pdf").build() {
+  match
+    UriBuilder::new().scheme("file").path("/home/user/document.pdf").build() {
     Ok(uri) => {
       assert_eq(uri.scheme(), "file")
       assert_eq(uri.path(), "/home/user/document.pdf")
@@ -2069,7 +2065,12 @@ test "uri_convenience_constructors_edge_cases" {
   }
 
   // 包含查询参数的邮箱
-  match UriBuilder::new().scheme("mailto").path("user@example.com").query_param("subject", "Hello").build() {
+  match
+    UriBuilder::new()
+    .scheme("mailto")
+    .path("user@example.com")
+    .query_param("subject", "Hello")
+    .build() {
     Ok(uri) => {
       assert_eq(uri.scheme(), "mailto")
       assert_eq(uri.path().contains("user@example.com"), true)
@@ -3928,7 +3929,7 @@ test "uri_normalization_comprehensive" {
 ///|
 test "rust_url_edge_cases" {
   // 测试来自rust-url库的边界用例
-  
+
   // 测试 "non-special://:@test/x"
   match Uri::parse("non-special://:@test/x") {
     Ok(uri) => {
@@ -3937,34 +3938,27 @@ test "rust_url_edge_cases" {
       assert_eq(uri.path(), "/x")
       match uri.authority {
         Some(auth) => {
-          assert_eq(auth.userinfo, Some(""))  // 空用户信息
+          assert_eq(auth.userinfo, Some("")) // 空用户信息
           assert_eq(auth.host, "test")
           assert_eq(auth.port, None)
         }
         None => abort("应该有authority部分")
       }
     }
-    Err(e) => {
-      println("解析 non-special://:@test/x 失败: " + e.to_string())
-      // 如果解析失败，说明当前实现有问题
-    }
+    Err(e) => println("解析 non-special://:@test/x 失败: " + e.to_string())
+    // 如果解析失败，说明当前实现有问题
   }
-  
+
   // 测试其他边界情况
   let test_cases = [
     ("http://:@test/x", "test"),
     ("ftp://:@example.com/path", "example.com"),
   ]
-  
   for case in test_cases {
     let (uri_str, expected_host) = case
     match Uri::parse(uri_str) {
-      Ok(uri) => {
-        assert_eq(uri.host(), Some(expected_host))
-      }
-      Err(_) => {
-        println("解析失败: " + uri_str)
-      }
+      Ok(uri) => assert_eq(uri.host(), Some(expected_host))
+      Err(_) => println("解析失败: " + uri_str)
     }
   }
 }
@@ -4162,14 +4156,17 @@ test "boundary_cases_and_compatibility" {
       assert_eq(uri.scheme, "non-special")
       match uri.authority {
         Some(auth) => {
-          assert_eq(auth.userinfo, Some(""))  // 规范化后的空用户信息
+          assert_eq(auth.userinfo, Some("")) // 规范化后的空用户信息
           assert_eq(auth.host, "test")
         }
         None => fail("Expected authority for non-special scheme")
       }
       assert_eq(uri.path, "/x")
     }
-    Err(e) => fail("Should parse non-special scheme with empty userinfo: " + e.to_string())
+    Err(e) =>
+      fail(
+        "Should parse non-special scheme with empty userinfo: " + e.to_string(),
+      )
   }
 
   // 测试IPv6地址验证的边界情况
@@ -4210,7 +4207,7 @@ test "boundary_cases_and_compatibility" {
 
   // 测试相对引用解析的复杂情况
   let base = Uri::parse("http://example.com/a/b/c/d").unwrap()
-  
+
   // 测试向上一级：../g
   let ref1 = Uri::{
     scheme: "",
@@ -4220,9 +4217,7 @@ test "boundary_cases_and_compatibility" {
     fragment: None,
   }
   match resolve_reference(base, ref1) {
-    Ok(resolved) => {
-      assert_eq(resolved.path, "/a/b/g") // 从/a/b/c/d向上一级到/a/b/c，然后加上g
-    }
+    Ok(resolved) => assert_eq(resolved.path, "/a/b/g") // 从/a/b/c/d向上一级到/a/b/c，然后加上g
     Err(_) => fail("Should resolve relative reference")
   }
 
@@ -4235,9 +4230,7 @@ test "boundary_cases_and_compatibility" {
     fragment: None,
   }
   match resolve_reference(base, ref2) {
-    Ok(resolved) => {
-      assert_eq(resolved.path, "/g") // 从/a/b/c/d向上3级超出了根目录
-    }
+    Ok(resolved) => assert_eq(resolved.path, "/g") // 从/a/b/c/d向上3级超出了根目录
     Err(_) => fail("Should resolve relative reference")
   }
 
@@ -4250,14 +4243,13 @@ test "boundary_cases_and_compatibility" {
     fragment: None,
   }
   match resolve_reference(base, ref3) {
-    Ok(resolved) => {
-      assert_eq(resolved.path, "/g") // 不应该超出根目录
-    }
+    Ok(resolved) => assert_eq(resolved.path, "/g") // 不应该超出根目录
     Err(_) => fail("Should resolve relative reference beyond root")
   }
 
   // 测试查询和片段的特殊字符处理
-  match Uri::parse("http://example.com/path?key=value%20with%20spaces#frag%20ment") {
+  match
+    Uri::parse("http://example.com/path?key=value%20with%20spaces#frag%20ment") {
     Ok(uri) => {
       assert_eq(uri.query, Some("key=value%20with%20spaces"))
       assert_eq(uri.fragment, Some("frag%20ment"))
@@ -4267,22 +4259,19 @@ test "boundary_cases_and_compatibility" {
 
   // 测试端口号边界值
   match Uri::parse("http://example.com:0/") {
-    Ok(uri) => {
+    Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.port, Some(0))
         None => fail("Expected authority")
       }
-    }
     Err(_) => fail("Should accept port 0")
   }
-
   match Uri::parse("http://example.com:65535/") {
-    Ok(uri) => {
+    Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.port, Some(65535))
         None => fail("Expected authority")
       }
-    }
     Err(_) => fail("Should accept port 65535")
   }
 
@@ -4291,7 +4280,6 @@ test "boundary_cases_and_compatibility" {
     Ok(_) => fail("Should reject port > 65535")
     Err(_) => () // 应该失败
   }
-
   match Uri::parse("http://example.com:-1/") {
     Ok(_) => fail("Should reject negative port")
     Err(_) => () // 应该失败
@@ -4306,7 +4294,10 @@ test "enhanced_error_handling" {
     Err(e) => {
       // 检查是否返回适当的错误类型
       let error_str = e.to_string()
-      assert_eq(error_str.contains("Invalid") || error_str.contains("Parse"), true)
+      assert_eq(
+        error_str.contains("Invalid") || error_str.contains("Parse"),
+        true,
+      )
     }
   }
 
@@ -4342,44 +4333,36 @@ test "rust_url_compatibility_cases" {
       }
       println("  authority: " + auth_str)
       println("  path: " + uri.path())
-      
+
       // 验证解析结果
       assert_eq(uri.scheme(), "non-special")
-      
       match uri.authority {
         Some(auth) => {
           // 验证userinfo和host的处理
-          assert_eq(auth.userinfo, Some(""))  // 空userinfo
-          assert_eq(auth.host, "test")        // host部分
-          assert_eq(auth.port, None)          // 无端口
+          assert_eq(auth.userinfo, Some("")) // 空userinfo
+          assert_eq(auth.host, "test") // host部分
+          assert_eq(auth.port, None) // 无端口
         }
         None => abort("Should have authority for this URI")
       }
-      
       assert_eq(uri.path(), "/x")
     }
-    Err(e) => {
-      println("rust-url兼容测试失败: " + e.to_string())
-      // 这可能表示我们的解析器还不够兼容
-    }
+    Err(e) => println("rust-url兼容测试失败: " + e.to_string())
+    // 这可能表示我们的解析器还不够兼容
   }
-  
+
   // 测试其他类似的边界案例
   let edge_cases = [
-    "scheme://:@host/",      // 空userinfo
-    "scheme://user:@host/",  // 空密码
-    "scheme://:pass@host/",  // 空用户名
-    "scheme://@@host/",      // 双@符号（应该失败）
+    "scheme://:@host/", // 空userinfo
+     "scheme://user:@host/", // 空密码
+     "scheme://:pass@host/", // 空用户名
+     "scheme://@@host/", // 双@符号（应该失败）
   ]
-  
   for case in edge_cases {
     match Uri::parse(case) {
-      Ok(uri) => {
+      Ok(uri) =>
         println("边界案例成功: " + case + " -> " + uri.to_string())
-      }
-      Err(e) => {
-        println("边界案例失败: " + case + " -> " + e.to_string())
-      }
+      Err(e) => println("边界案例失败: " + case + " -> " + e.to_string())
     }
   }
 }
@@ -4388,42 +4371,40 @@ test "rust_url_compatibility_cases" {
 test "rfc3986_relative_reference_standard_tests" {
   // 基URI: http://a/b/c/d;p?q
   let base_uri = "http://a/b/c/d;p?q"
-  
+
   // 测试案例数组: [相对引用, 期望结果]
   let test_cases = [
     // 5.4.1 Normal Examples - 选择一些关键案例
-    ("g", "http://a/b/c/g"),                  // 2  
-    ("./g", "http://a/b/c/g"),                // 3
-    ("g/", "http://a/b/c/g/"),                // 4
-    ("/g", "http://a/g"),                     // 5
-    ("g?y", "http://a/b/c/g?y"),              // 8
-    ("g#s", "http://a/b/c/g#s"),              // 10
-    (".", "http://a/b/c/"),                   // 16
-    ("./", "http://a/b/c/"),                  // 17
-    ("..", "http://a/b/"),                    // 18
-    ("../", "http://a/b/"),                   // 19
-    ("../g", "http://a/b/g"),                 // 20
-    ("../../g", "http://a/g"),                // 23
-    
+    ("g", "http://a/b/c/g"), // 2  
+    ("./g", "http://a/b/c/g"), // 3
+    ("g/", "http://a/b/c/g/"), // 4
+    ("/g", "http://a/g"), // 5
+    ("g?y", "http://a/b/c/g?y"), // 8
+    ("g#s", "http://a/b/c/g#s"), // 10
+    (".", "http://a/b/c/"), // 16
+    ("./", "http://a/b/c/"), // 17
+    ("..", "http://a/b/"), // 18
+    ("../", "http://a/b/"), // 19
+    ("../g", "http://a/b/g"), // 20
+    ("../../g", "http://a/g"), // 23
+
     // 5.4.2 Abnormal Examples - 关键案例
-    ("../../../g", "http://a/g"),             // 31 - 过多的../应该被限制
-    ("/./g", "http://a/g"),                   // 41 - 绝对路径中的./应该被移除
-    ("/../g", "http://a/g"),                  // 42 - 绝对路径中的../应该被移除
-    ("./../g", "http://a/b/g"),               // 51 - 复杂的相对路径
-    ("g/./h", "http://a/b/c/g/h"),            // 53 - 路径中的./应该被移除
-    ("g/../h", "http://a/b/c/h"),             // 54 - 路径中的../应该被处理
+    ("../../../g", "http://a/g"), // 31 - 过多的../应该被限制
+    ("/./g", "http://a/g"), // 41 - 绝对路径中的./应该被移除
+    ("/../g", "http://a/g"), // 42 - 绝对路径中的../应该被移除
+    ("./../g", "http://a/b/g"), // 51 - 复杂的相对路径
+    ("g/./h", "http://a/b/c/g/h"), // 53 - 路径中的./应该被移除
+    ("g/../h", "http://a/b/c/h"), // 54 - 路径中的../应该被处理
   ]
-  
   println("RFC 3986相对引用解析标准测试:")
   let mut passed = 0
   let mut failed = 0
-  
   for i = 0; i < test_cases.length(); i = i + 1 {
     let (relative_ref, expected) = test_cases[i]
-    
+
     // 使用join_uri函数进行测试
     match join_uri(base_uri, relative_ref) {
-      Ok(result) => {
+      Ok(result) =>
         if result == expected {
           passed = passed + 1
         } else {
@@ -4433,20 +4414,28 @@ test "rfc3986_relative_reference_standard_tests" {
           println("  期望: '" + expected + "'")
           println("  实际: '" + result + "'")
         }
-      }
       Err(e) => {
         failed = failed + 1
-        println("案例 " + (i + 1).to_string() + " 解析失败: " + e.to_string())
+        println(
+          "案例 " + (i + 1).to_string() + " 解析失败: " + e.to_string(),
+        )
       }
     }
   }
-  
-  println("测试结果: " + passed.to_string() + " 通过, " + failed.to_string() + " 失败")
-  
+  println(
+    "测试结果: " +
+    passed.to_string() +
+    " 通过, " +
+    failed.to_string() +
+    " 失败",
+  )
+
   // 如果有失败案例，不要让整个测试失败，而是报告问题
   if failed > 0 {
-    println("警告: " + failed.to_string() + " 个RFC 3986标准案例未通过，需要进一步优化")
+    println(
+      "警告: " +
+      failed.to_string() +
+      " 个RFC 3986标准案例未通过，需要进一步优化",
+    )
   }
 }
-
-

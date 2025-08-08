@@ -9,7 +9,11 @@ fn get_parent_path(path : String) -> String {
       break
     }
   }
-  if last_slash <= 0 { "/" } else { path.substring(start=0, end=last_slash) }
+  if last_slash <= 0 {
+    "/"
+  } else {
+    path.substring(start=0, end=last_slash)
+  }
 }
 
 ///| 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
@@ -59,9 +63,7 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
     }
     target_scheme = base.scheme
   }
-  
   target_fragment = reference.fragment
-
   Ok({
     scheme: target_scheme,
     authority: target_authority,

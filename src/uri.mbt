@@ -172,13 +172,17 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
       Some(pos) => {
         let ipv6_part = remaining.substring(start=1, end=pos) // 去掉方括号
         if not(is_valid_ipv6(ipv6_part)) {
-          return Err(InvalidIPv6Address("Invalid IPv6 address format: " + ipv6_part))
+          return Err(
+            InvalidIPv6Address("Invalid IPv6 address format: " + ipv6_part),
+          )
         }
         host = remaining.substring(start=0, end=pos + 1)
         remaining = remaining.substring(start=pos + 1)
       }
       None =>
-        return Err(InvalidIPv6Address("Invalid IPv6 address: missing closing bracket"))
+        return Err(
+          InvalidIPv6Address("Invalid IPv6 address: missing closing bracket"),
+        )
     }
   } else {
     // 普通 host，查找 port 分隔符
@@ -202,7 +206,6 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
     } else {
       remaining
     }
-    
     if port_str.length() > 0 {
       match parse_int(port_str) {
         Some(p) =>
@@ -220,7 +223,6 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   if host.length() == 0 {
     return Err(InvalidHostname("Host cannot be empty in authority"))
   }
-  
   Ok({ userinfo, host, port })
 }
 
@@ -241,8 +243,6 @@ fn is_valid_scheme(scheme : String) -> Bool {
   }
   true
 }
-
-
 
 ///| 转换为字符串
 pub fn Uri::to_string(self : Uri) -> String {
@@ -278,10 +278,7 @@ pub fn Authority::to_string(self : Authority) -> String {
   result
 }
 
-
-
 // ==================== 高级URI操作功能 ====================
-
 
 ///| 获取主机名
 pub fn Uri::host(self : Uri) -> String? {
@@ -304,8 +301,6 @@ pub fn Uri::default_port(self : Uri) -> Int? {
   get_default_port(self.scheme)
 }
 
-
-
 ///| 获取用户信息
 pub fn Uri::userinfo(self : Uri) -> String? {
   match self.authority {
@@ -313,9 +308,6 @@ pub fn Uri::userinfo(self : Uri) -> String? {
     None => None
   }
 }
-
-
-
 
 ///| 获取scheme组件
 pub fn Uri::scheme(self : Uri) -> String {
@@ -373,12 +365,15 @@ pub fn Uri::filename(self : Uri) -> String? {
   if self.path.has_suffix("/") || self.path.length() == 0 {
     return None
   }
-  
   let parts = self.path.split("/")
   match parts.last() {
     Some(filename_view) => {
       let filename = filename_view.to_string()
-      if filename.length() > 0 { Some(filename) } else { None }
+      if filename.length() > 0 {
+        Some(filename)
+      } else {
+        None
+      }
     }
     None => None
   }
@@ -387,16 +382,16 @@ pub fn Uri::filename(self : Uri) -> String? {
 ///| 获取文件扩展名
 pub fn Uri::file_extension(self : Uri) -> String? {
   match self.filename() {
-    Some(filename) => {
+    Some(filename) =>
       match filename.rev_find(".") {
-        Some(index) => if index < filename.length() - 1 {
-          Some(filename.substring(start=index + 1))
-        } else {
-          None
-        }
+        Some(index) =>
+          if index < filename.length() - 1 {
+            Some(filename.substring(start=index + 1))
+          } else {
+            None
+          }
         None => None
       }
-    }
     None => None
   }
 }
@@ -406,20 +401,23 @@ pub fn Uri::parent_path(self : Uri) -> String {
   if self.path.length() == 0 {
     return ""
   }
-  
+
   // 特殊情况：根路径"/"的父路径是"/"
   if self.path == "/" {
     return "/"
   }
-  
   let trimmed = if self.path.has_suffix("/") {
     self.path.substring(start=0, end=self.path.length() - 1)
   } else {
     self.path
   }
-  
   match trimmed.rev_find("/") {
-    Some(index) => if index == 0 { "/" } else { trimmed.substring(start=0, end=index) }
+    Some(index) =>
+      if index == 0 {
+        "/"
+      } else {
+        trimmed.substring(start=0, end=index)
+      }
     None => ""
   }
 }
@@ -435,14 +433,6 @@ pub fn Uri::equals_normalized(self : Uri, other : Uri) -> Bool {
 pub fn Uri::is_absolute(self : Uri) -> Bool {
   is_not_empty(self.scheme)
 }
-
-
-
-
-
-
-
-
 
 ///| 规范化URI
 pub fn Uri::normalize(self : Uri) -> Uri {
@@ -494,24 +484,17 @@ pub fn Uri::validate(self : Uri) -> Result[Unit, UriError] {
   Ok(())
 }
 
-
-
 ///| 规范化端口号（移除默认端口）
 fn normalize_port(scheme : String, port : Int?) -> Int? {
   match port {
-    Some(p) => {
+    Some(p) =>
       match get_default_port(scheme) {
         Some(default_port) => if p == default_port { None } else { Some(p) }
         None => Some(p)
       }
-    }
     None => None
   }
 }
-
-
-
-
 
 ///| 验证userinfo格式是否有效
 fn is_valid_userinfo(userinfo : String) -> Bool {
@@ -519,37 +502,36 @@ fn is_valid_userinfo(userinfo : String) -> Bool {
   if userinfo.length() == 0 {
     return true
   }
-  
+
   // userinfo可以只包含冒号（表示空用户名和空密码）
   if userinfo == ":" {
     return true
   }
-  
+
   // 验证字符是否为有效的userinfo字符
   // RFC 3986: userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
   for i = 0; i < userinfo.length(); i = i + 1 {
     let c = Int::unsafe_to_char(userinfo[i])
-    if not(is_unreserved_char(c) || is_sub_delim_char(c) || c == ':' || c == '%') {
+    if not(
+        is_unreserved_char(c) || is_sub_delim_char(c) || c == ':' || c == '%',
+      ) {
       return false
     }
   }
-  
   true
 }
-
-
 
 ///| 验证IPv6地址格式（RFC 3986兼容实现）
 fn is_valid_ipv6(ipv6 : String) -> Bool {
   if ipv6.length() == 0 {
     return false
   }
-  
+
   // 不支持区域ID（包含%的地址）
   if ipv6.contains("%") {
     return false
   }
-  
+
   // 检查基本格式：不能以单个冒号开头或结尾（除非是::）
   if ipv6.has_prefix(":") && not(ipv6.has_prefix("::")) {
     return false
@@ -557,40 +539,39 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
   if ipv6.has_suffix(":") && not(ipv6.has_suffix("::")) {
     return false
   }
-  
+
   // 检查是否包含IPv4映射格式 (::ffff:192.0.2.1)
   if ipv6.contains("::ffff:") || ipv6.contains("::FFFF:") {
     return validate_ipv4_mapped_ipv6(ipv6)
   }
-  
+
   // 分割成段
   let segments = split_ipv6_segments(ipv6)
   let mut double_colon_count = 0
   let mut empty_segments = 0
-  
+
   // 计算双冒号数量
   for i = 0; i < ipv6.length() - 1; i = i + 1 {
-    if Int::unsafe_to_char(ipv6[i]) == ':' && Int::unsafe_to_char(ipv6[i + 1]) == ':' {
+    if Int::unsafe_to_char(ipv6[i]) == ':' &&
+      Int::unsafe_to_char(ipv6[i + 1]) == ':' {
       double_colon_count = double_colon_count + 1
     }
   }
-  
+
   // 最多只能有一个双冒号
   if double_colon_count > 1 {
     return false
   }
-  
+
   // 验证每个段
   for segment in segments {
     if segment.length() == 0 {
       empty_segments = empty_segments + 1
-    } else {
-      if not(is_valid_ipv6_segment(segment)) {
-        return false
-      }
+    } else if not(is_valid_ipv6_segment(segment)) {
+      return false
     }
   }
-  
+
   // 如果有双冒号，可以有空段；否则必须有8个非空段
   if double_colon_count > 0 {
     // 有双冒号的情况：总段数 + 空段数 <= 8
@@ -606,7 +587,6 @@ fn is_valid_ipv6_segment(segment : String) -> Bool {
   if segment.length() == 0 || segment.length() > 4 {
     return false
   }
-  
   for i = 0; i < segment.length(); i = i + 1 {
     let c = Int::unsafe_to_char(segment[i])
     if not(is_hex_char(c)) {
@@ -621,7 +601,6 @@ fn split_ipv6_segments(ipv6 : String) -> Array[String] {
   let segments : Array[String] = []
   let mut current_segment = ""
   let mut i = 0
-  
   while i < ipv6.length() {
     let c = Int::unsafe_to_char(ipv6[i])
     if c == ':' {
@@ -637,11 +616,9 @@ fn split_ipv6_segments(ipv6 : String) -> Array[String] {
     }
     i = i + 1
   }
-  
   if current_segment.length() > 0 {
     segments.push(current_segment)
   }
-  
   segments
 }
 
@@ -665,7 +642,6 @@ fn is_valid_ipv4(ipv4 : String) -> Bool {
   if parts.length() != 4 {
     return false
   }
-  
   for part in parts {
     match parse_int(part) {
       Some(num) => {
@@ -682,8 +658,3 @@ fn is_valid_ipv4(ipv4 : String) -> Bool {
   }
   true
 }
-
-
-
-
-

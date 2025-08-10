@@ -174,21 +174,19 @@ pub fn NormalizationOptions::use_idna_2008_strict(
 ///| 预设：Web 兼容
 pub fn NormalizationOptions::web_compat() -> NormalizationOptions {
   default_normalization_options()
-    .with_fold_duplicate_slashes()
-    .use_idna_uts46_nontransitional()
-    .with_percent_normalize()
-    .with_decode_unreserved_pct()
-    .with_ipv6_normalize()
-    .with_host_collapse_dots()
-    .with_host_strip_trailing_dot()
+  .with_fold_duplicate_slashes()
+  .use_idna_uts46_nontransitional()
+  .with_percent_normalize()
+  .with_decode_unreserved_pct()
+  .with_ipv6_normalize()
+  .with_host_collapse_dots()
+  .with_host_strip_trailing_dot()
 }
 
 ///| 预设：RFC 3986 严格
 pub fn NormalizationOptions::rfc3986_strict() -> NormalizationOptions {
   // 不进行 IDNA；保留斜杠；仅进行 %HH 大写与 IPv6 规范化
-  default_normalization_options()
-    .with_percent_normalize()
-    .with_ipv6_normalize()
+  default_normalization_options().with_percent_normalize().with_ipv6_normalize()
 }
 
 ///| UriError to_string implementation
@@ -587,11 +585,28 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   // 处理主机名：
   let normalized_authority = match self.authority {
     Some(auth) => {
-      let lowered_host = if auth.host.length() > 0 { to_lowercase(auth.host) } else { auth.host }
-      let host_after_dots = if options.host_collapse_dots { collapse_host_dots(lowered_host) } else { lowered_host }
-      let host_after_trailing = if options.host_strip_trailing_dot { strip_trailing_dot(host_after_dots) } else { host_after_dots }
-      let host_after_idna = if options.enable_idna { normalize_host_with_profile(host_after_trailing, options.idna_profile) } else { host_after_trailing }
-      let final_host = if options.ipv6_normalize && has_prefix(host_after_idna, "[") {
+      let lowered_host = if auth.host.length() > 0 {
+        to_lowercase(auth.host)
+      } else {
+        auth.host
+      }
+      let host_after_dots = if options.host_collapse_dots {
+        collapse_host_dots(lowered_host)
+      } else {
+        lowered_host
+      }
+      let host_after_trailing = if options.host_strip_trailing_dot {
+        strip_trailing_dot(host_after_dots)
+      } else {
+        host_after_dots
+      }
+      let host_after_idna = if options.enable_idna {
+        normalize_host_with_profile(host_after_trailing, options.idna_profile)
+      } else {
+        host_after_trailing
+      }
+      let final_host = if options.ipv6_normalize &&
+        has_prefix(host_after_idna, "[") {
         normalize_ipv6_literal(host_after_idna)
       } else {
         host_after_idna
@@ -600,7 +615,13 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
       let mut new_userinfo = auth.userinfo
       if options.percent_normalize {
         match auth.userinfo {
-          Some(ui) => new_userinfo = Some(normalize_percent_encoding_in_string(ui, options.decode_unreserved_pct))
+          Some(ui) =>
+            new_userinfo = Some(
+              normalize_percent_encoding_in_string(
+                ui,
+                options.decode_unreserved_pct,
+              ),
+            )
           None => ()
         }
       }
@@ -614,21 +635,47 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   }
 
   // 处理路径：
-  let mut normalized_path = if options.fold_duplicate_slashes { fold_duplicate_slashes(self.path) } else { self.path }
-  if options.percent_normalize {
-    normalized_path = normalize_percent_encoding_in_string(normalized_path, options.decode_unreserved_pct)
+  let mut normalized_path = if options.fold_duplicate_slashes {
+    fold_duplicate_slashes(self.path)
+  } else {
+    self.path
   }
-
+  if options.percent_normalize {
+    normalized_path = normalize_percent_encoding_in_string(
+      normalized_path,
+      options.decode_unreserved_pct,
+    )
+  }
   {
     scheme: normalized_scheme,
     authority: normalized_authority,
     path: normalized_path,
     query: match self.query {
-      Some(q) => if options.percent_normalize { Some(normalize_percent_encoding_in_string(q, options.decode_unreserved_pct)) } else { Some(q) }
+      Some(q) =>
+        if options.percent_normalize {
+          Some(
+            normalize_percent_encoding_in_string(
+              q,
+              options.decode_unreserved_pct,
+            ),
+          )
+        } else {
+          Some(q)
+        }
       None => None
     },
     fragment: match self.fragment {
-      Some(f) => if options.percent_normalize { Some(normalize_percent_encoding_in_string(f, options.decode_unreserved_pct)) } else { Some(f) }
+      Some(f) =>
+        if options.percent_normalize {
+          Some(
+            normalize_percent_encoding_in_string(
+              f,
+              options.decode_unreserved_pct,
+            ),
+          )
+        } else {
+          Some(f)
+        }
       None => None
     },
   }
@@ -661,21 +708,35 @@ fn fold_duplicate_slashes(path : String) -> String {
 
 ///| 折叠主机中的重复点（.. -> .）
 fn collapse_host_dots(host : String) -> String {
-  if host.length() == 0 { return host }
-  if has_prefix(host, "[") { return host }
+  if host.length() == 0 {
+    return host
+  }
+  if has_prefix(host, "[") {
+    return host
+  }
   let labels = split_string(host, '.')
   let filtered : Array[String] = []
   for l in labels {
-    if l.length() > 0 { filtered.push(l) }
+    if l.length() > 0 {
+      filtered.push(l)
+    }
   }
   filtered.join(".")
 }
 
 ///| 去掉主机末尾点（example.com. -> example.com）
 fn strip_trailing_dot(host : String) -> String {
-  if host.length() == 0 { return host }
-  if has_prefix(host, "[") { return host }
-  if host.has_suffix(".") { host.substring(start=0, end=host.length() - 1) } else { host }
+  if host.length() == 0 {
+    return host
+  }
+  if has_prefix(host, "[") {
+    return host
+  }
+  if host.has_suffix(".") {
+    host.substring(start=0, end=host.length() - 1)
+  } else {
+    host
+  }
 }
 
 // 已移除未使用的 normalize_host_idna（由 normalize_host_with_profile 取代）
@@ -692,17 +753,25 @@ pub enum IDNAProfile {
 
 ///| 依据 profile 进行主机名 IDNA 规范化与 Punycode 编码
 fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
-  if host.length() == 0 { return host }
-  if has_prefix(host, "[") { return host } // IPv6
-
+  if host.length() == 0 {
+    return host
+  }
+  if has_prefix(host, "[") {
+    return host
+  } // IPv6
   let preprocessed = map_alt_dots(host)
   let labels = split_string(preprocessed, '.')
   let out_labels : Array[String] = []
   for raw_label in labels {
     let lower = to_lowercase(raw_label)
-    if lower.length() == 0 { out_labels.push(""); continue }
-    if has_prefix(lower, "xn--") { out_labels.push(lower); continue }
-
+    if lower.length() == 0 {
+      out_labels.push("")
+      continue
+    }
+    if has_prefix(lower, "xn--") {
+      out_labels.push(lower)
+      continue
+    }
     if contains_non_ascii(lower) {
       // 1) TR46 映射 + NFKC（宽松/严格取决于 profile；当前为增强子集）
       let (mapped, had_contextj) = tr46_map_and_nfkc(lower, profile)
@@ -715,9 +784,11 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
         }
         if reject_for_contextj {
           out_labels.push(lower)
-        } else {
           // 可选：在严格模式下应用 STD3 与连字符规则
-          if !is_valid_uts46_label(mapped, profile, had_contextj) { out_labels.push(lower) } else { out_labels.push(mapped) }
+        } else if !is_valid_uts46_label(mapped, profile, had_contextj) {
+          out_labels.push(lower)
+        } else {
+          out_labels.push(mapped)
         }
         continue
       }
@@ -741,31 +812,46 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
 
 ///| 依据 profile 进行主机名 IDNA 规范化（返回错误而非静默回退）。
 /// 严格模式推荐使用；非严格模式亦可用以获取明确错误。
-fn normalize_host_with_profile_strict(host : String, profile : IDNAProfile) -> String? {
-  if host.length() == 0 { return Some(host) }
-  if has_prefix(host, "[") { return Some(host) } // IPv6
-
+fn normalize_host_with_profile_strict(
+  host : String,
+  profile : IDNAProfile,
+) -> String? {
+  if host.length() == 0 {
+    return Some(host)
+  }
+  if has_prefix(host, "[") {
+    return Some(host)
+  } // IPv6
   let preprocessed = map_alt_dots(host)
   let labels = split_string(preprocessed, '.')
   let out_labels : Array[String] = []
   for raw_label in labels {
     let lower = to_lowercase(raw_label)
-    if lower.length() == 0 { out_labels.push(""); continue }
-    if has_prefix(lower, "xn--") { out_labels.push(lower); continue }
-
+    if lower.length() == 0 {
+      out_labels.push("")
+      continue
+    }
+    if has_prefix(lower, "xn--") {
+      out_labels.push(lower)
+      continue
+    }
     if contains_non_ascii(lower) {
       // 使用 TR46 映射 + NFKC（当前实现为增强的子集）
       let (mapped_rough, had_contextj) = tr46_map_and_nfkc(lower, profile)
       // 校验标签（严格返回错误）
-      if !validate_uts46_label(mapped_rough, profile, had_contextj) { return None }
+      if !validate_uts46_label(mapped_rough, profile, had_contextj) {
+        return None
+      }
       // Punycode 编码
       match punycode_encode_strict(mapped_rough) {
         Some(puny) => out_labels.push("xn--" + puny)
-        None => { return None }
+        None => return None
       }
-    } else {
       // ASCII 标签：严格模式下应用 STD3 等
-      if !validate_uts46_label(lower, profile, false) { return None } else { out_labels.push(lower) }
+    } else if !validate_uts46_label(lower, profile, false) {
+      return None
+    } else {
+      out_labels.push(lower)
     }
   }
   Some(out_labels.join("."))
@@ -783,7 +869,10 @@ pub fn domain_to_ascii_strict(domain : String) -> String? {
 }
 
 ///| 兼容版本：允许指定 profile 的严格 ASCII 转换。建议优先使用无参严格版。
-pub fn domain_to_ascii_strict_with_profile(domain : String, profile : IDNAProfile) -> String? {
+pub fn domain_to_ascii_strict_with_profile(
+  domain : String,
+  profile : IDNAProfile,
+) -> String? {
   normalize_host_with_profile_strict(domain, profile)
 }
 
@@ -792,27 +881,40 @@ pub fn domain_to_ascii_strict_with_profile(domain : String, profile : IDNAProfil
 /// - 会处理 U+3002/U+FF0E/U+FF61 作为分隔符
 /// - 解码失败时保留原标签的小写形式
 pub fn domain_to_unicode(domain : String) -> String {
-  if domain.length() == 0 { return domain }
-  if has_prefix(domain, "[") { return domain }
+  if domain.length() == 0 {
+    return domain
+  }
+  if has_prefix(domain, "[") {
+    return domain
+  }
   let preprocessed = map_alt_dots(domain)
   let labels = split_string(preprocessed, '.')
   let out_labels : Array[String] = []
   for raw_label in labels {
     let lower = to_lowercase(raw_label)
-    if lower.length() == 0 { out_labels.push(""); continue }
+    if lower.length() == 0 {
+      out_labels.push("")
+      continue
+    }
     if has_prefix(lower, "xn--") {
       let puny = lower.substring(start=4)
       match punycode_decode_strict(puny) {
         Some(decoded) => {
           // 可选：对解码后的标签应用 TR46+NFKC 以获得规范化视图
-          let (mapped, _) = tr46_map_and_nfkc(decoded, IDNAProfile::Uts46NonTransitional)
+          let (mapped, _) = tr46_map_and_nfkc(
+            decoded,
+            IDNAProfile::Uts46NonTransitional,
+          )
           out_labels.push(mapped)
         }
         None => out_labels.push(lower)
       }
     } else {
       // 非 punycode：返回小写（可选映射以提升显示一致性）
-      let (mapped_plain, _) = tr46_map_and_nfkc(lower, IDNAProfile::Uts46NonTransitional)
+      let (mapped_plain, _) = tr46_map_and_nfkc(
+        lower,
+        IDNAProfile::Uts46NonTransitional,
+      )
       out_labels.push(mapped_plain)
     }
   }
@@ -825,7 +927,11 @@ fn map_alt_dots(s : String) -> String {
   for i = 0; i < s.length(); i = i + 1 {
     let c = Int::unsafe_to_char(s[i])
     let code = Char::to_int(c)
-    if code == 0x3002 || code == 0xFF0E || code == 0xFF61 { out = out + "." } else { out = out + c.to_string() }
+    if code == 0x3002 || code == 0xFF0E || code == 0xFF61 {
+      out = out + "."
+    } else {
+      out = out + c.to_string()
+    }
   }
   out
 }
@@ -850,8 +956,8 @@ fn uts46_map(input : String, profile : IDNAProfile) -> (String, Bool) {
     // ß (U+00DF)
     if code == 0x00DF {
       match profile {
-        IDNAProfile::Uts46Transitional => { out = out + "ss" }
-        _ => { out = out + Int::unsafe_to_char(0x00DF).to_string() }
+        IDNAProfile::Uts46Transitional => out = out + "ss"
+        _ => out = out + Int::unsafe_to_char(0x00DF).to_string()
       }
       continue
     }
@@ -884,105 +990,140 @@ fn nfkc_lite(input : String) -> String {
   while i < input.length() {
     let cp = Char::to_int(Int::unsafe_to_char(input[i]))
     // 拉丁合字 LIGATURES PRESENTATION FORMS
-    if cp == 0xFB00 { out = out + "ff" }
-    else if cp == 0xFB01 { out = out + "fi" }
-    else if cp == 0xFB02 { out = out + "fl" }
-    else if cp == 0xFB03 { out = out + "ffi" }
-    else if cp == 0xFB04 { out = out + "ffl" }
-    else if cp == 0xFB05 { out = out + "st" }
-    else if cp == 0xFB06 { out = out + "st" }
-    else { out = out + Int::unsafe_to_char(cp).to_string() }
+    if cp == 0xFB00 {
+      out = out + "ff"
+    } else if cp == 0xFB01 {
+      out = out + "fi"
+    } else if cp == 0xFB02 {
+      out = out + "fl"
+    } else if cp == 0xFB03 {
+      out = out + "ffi"
+    } else if cp == 0xFB04 {
+      out = out + "ffl"
+    } else if cp == 0xFB05 {
+      out = out + "st"
+    } else if cp == 0xFB06 {
+      out = out + "st"
+    } else {
+      out = out + Int::unsafe_to_char(cp).to_string()
+    }
     i = i + 1
   }
   out
 }
 
 ///| 标签校验（保守实现）：长度/连字符；严格模式下附加 STD3、连字符 3-4、Bidi 与 ContextJ 检查
-fn is_valid_uts46_label(label : String, profile : IDNAProfile, had_contextj : Bool) -> Bool {
+fn is_valid_uts46_label(
+  label : String,
+  profile : IDNAProfile,
+  had_contextj : Bool,
+) -> Bool {
   // 长度限制：1..63（不计算 xn-- 前缀，这里在编码前检查原 label）
-  if label.length() == 0 || label.length() > 63 { return false }
-  if label.has_prefix("-") || label.has_suffix("-") { return false }
+  if label.length() == 0 || label.length() > 63 {
+    return false
+  }
+  if label.has_prefix("-") || label.has_suffix("-") {
+    return false
+  }
 
   // 严格模式：禁止第 3、4 位为 "--"（U-label 阶段）
   match profile {
-    IDNAProfile::IDNA2008Strict => {
+    IDNAProfile::IDNA2008Strict =>
       if label.length() >= 4 {
         let c2 = Int::unsafe_to_char(label[2])
         let c3 = Int::unsafe_to_char(label[3])
-        if c2 == '-' && c3 == '-' { return false }
+        if c2 == '-' && c3 == '-' {
+          return false
+        }
       }
-    }
     _ => ()
   }
 
   // 严格模式：STD3 ASCII 规则（仅当标签为 ASCII）
   if !contains_non_ascii(label) {
     match profile {
-      IDNAProfile::IDNA2008Strict => {
-        if !is_ascii_std3_compatible_label(label) { return false }
-      }
+      IDNAProfile::IDNA2008Strict =>
+        if !is_ascii_std3_compatible_label(label) {
+          return false
+        }
       _ => ()
     }
   }
 
   // 严格模式：ContextJ（若出现 ZWJ/ZWNJ，拒绝；完整上下文规则尚未实现）
   match profile {
-    IDNAProfile::IDNA2008Strict => { if had_contextj { return false } }
+    IDNAProfile::IDNA2008Strict => if had_contextj { return false }
     _ => ()
   }
 
   // 严格模式：基础 Bidi 子集检查（含 RTL 时禁止混合 L；且末尾为 RTL 范围）
   match profile {
-    IDNAProfile::IDNA2008Strict => {
+    IDNAProfile::IDNA2008Strict =>
       if contains_rtl_codepoint(label) {
-        if contains_ascii_ltr_letter(label) { return false }
-        if !ends_with_rtl_codepoint(label) { return false }
+        if contains_ascii_ltr_letter(label) {
+          return false
+        }
+        if !ends_with_rtl_codepoint(label) {
+          return false
+        }
       }
-    }
     _ => ()
   }
-
   true
 }
 
 ///| 标签校验（返回错误类型）。严格模式建议使用本函数。
-fn validate_uts46_label(label : String, profile : IDNAProfile, had_contextj : Bool) -> Bool {
+fn validate_uts46_label(
+  label : String,
+  profile : IDNAProfile,
+  had_contextj : Bool,
+) -> Bool {
   // 长度限制：1..63
-  if label.length() == 0 || label.length() > 63 { return false }
-  if label.has_prefix("-") || label.has_suffix("-") { return false }
-
+  if label.length() == 0 || label.length() > 63 {
+    return false
+  }
+  if label.has_prefix("-") || label.has_suffix("-") {
+    return false
+  }
   match profile {
-    IDNAProfile::IDNA2008Strict => {
+    IDNAProfile::IDNA2008Strict =>
       if label.length() >= 4 {
         let c2 = Int::unsafe_to_char(label[2])
         let c3 = Int::unsafe_to_char(label[3])
-        if c2 == '-' && c3 == '-' { return false }
+        if c2 == '-' && c3 == '-' {
+          return false
+        }
       }
-    }
     _ => ()
   }
-
   if !contains_non_ascii(label) {
     match profile {
-      IDNAProfile::IDNA2008Strict => {
-        if !is_ascii_std3_compatible_label(label) { return false }
-      }
+      IDNAProfile::IDNA2008Strict =>
+        if !is_ascii_std3_compatible_label(label) {
+          return false
+        }
       _ => ()
     }
   }
-
   match profile {
     IDNAProfile::IDNA2008Strict => {
-      if had_contextj { return false }
-      if !check_contexto_ok(label) { return false }
+      if had_contextj {
+        return false
+      }
+      if !check_contexto_ok(label) {
+        return false
+      }
       if contains_rtl_codepoint(label) {
-        if contains_ascii_ltr_letter(label) { return false }
-        if !ends_with_rtl_codepoint(label) { return false }
+        if contains_ascii_ltr_letter(label) {
+          return false
+        }
+        if !ends_with_rtl_codepoint(label) {
+          return false
+        }
       }
     }
     _ => ()
   }
-
   true
 }
 
@@ -998,77 +1139,122 @@ fn check_contexto_ok(label : String) -> Bool {
     let ch = Int::unsafe_to_char(label[idx])
     let cp = Char::to_int(ch)
     if cp == 0x00B7 { // MIDDLE DOT
-      let prev_ok = if idx > 0 { Int::unsafe_to_char(label[idx - 1]) == 'l' } else { false }
-      let next_ok = if idx + 1 < label.length() { Int::unsafe_to_char(label[idx + 1]) == 'l' } else { false }
-      if !(prev_ok && next_ok) { return false }
+      let prev_ok = if idx > 0 {
+        Int::unsafe_to_char(label[idx - 1]) == 'l'
+      } else {
+        false
+      }
+      let next_ok = if idx + 1 < label.length() {
+        Int::unsafe_to_char(label[idx + 1]) == 'l'
+      } else {
+        false
+      }
+      if !(prev_ok && next_ok) {
+        return false
+      }
     }
     if cp == 0x0375 { // GREEK LOWER NUMERAL SIGN (KERAIA)
-      let next_is_greek = if idx + 1 < label.length() { is_greek_letter(Char::to_int(Int::unsafe_to_char(label[idx + 1]))) } else { false }
-      if !next_is_greek { return false }
+      let next_is_greek = if idx + 1 < label.length() {
+        is_greek_letter(Char::to_int(Int::unsafe_to_char(label[idx + 1])))
+      } else {
+        false
+      }
+      if !next_is_greek {
+        return false
+      }
     }
     if cp == 0x30FB { // KATAKANA MIDDLE DOT
-      if !contains_kana(label) { return false }
+      if !contains_kana(label) {
+        return false
+      }
     }
-    if cp >= 0x0660 && cp <= 0x0669 { has_arabic_indic = true }
-    if cp >= 0x06F0 && cp <= 0x06F9 { has_ext_arabic_indic = true }
+    if cp >= 0x0660 && cp <= 0x0669 {
+      has_arabic_indic = true
+    }
+    if cp >= 0x06F0 && cp <= 0x06F9 {
+      has_ext_arabic_indic = true
+    }
   }
-  if has_arabic_indic && has_ext_arabic_indic { return false }
+  if has_arabic_indic && has_ext_arabic_indic {
+    return false
+  }
   true
 }
 
-fn is_greek_letter(cp : Int) -> Bool { cp >= 0x0370 && cp <= 0x03FF }
+///|
+fn is_greek_letter(cp : Int) -> Bool {
+  cp >= 0x0370 && cp <= 0x03FF
+}
 
+///|
 fn contains_kana(s : String) -> Bool {
   for i = 0; i < s.length(); i = i + 1 {
     let cp = Char::to_int(Int::unsafe_to_char(s[i]))
-    if (cp >= 0x3040 && cp <= 0x309F) || (cp >= 0x30A0 && cp <= 0x30FF) { return true }
+    if (cp >= 0x3040 && cp <= 0x309F) || (cp >= 0x30A0 && cp <= 0x30FF) {
+      return true
+    }
   }
   false
 }
 
+///|
 fn is_ascii_std3_compatible_label(label : String) -> Bool {
   for i = 0; i < label.length(); i = i + 1 {
     let c = Int::unsafe_to_char(label[i])
-    if !(is_ascii_lower_letter(c) || is_ascii_digit(c) || c == '-') { return false }
+    if !(is_ascii_lower_letter(c) || is_ascii_digit(c) || c == '-') {
+      return false
+    }
   }
   true
 }
 
+///|
 fn is_ascii_lower_letter(c : Char) -> Bool {
   let code = Char::to_int(c)
   code >= 0x61 && code <= 0x7A
 }
 
+///|
 fn is_ascii_digit(c : Char) -> Bool {
   let code = Char::to_int(c)
   code >= 0x30 && code <= 0x39
 }
 
+///|
 fn contains_ascii_ltr_letter(s : String) -> Bool {
   for i = 0; i < s.length(); i = i + 1 {
     let c = Int::unsafe_to_char(s[i])
-    if is_ascii_lower_letter(c) { return true }
+    if is_ascii_lower_letter(c) {
+      return true
+    }
   }
   false
 }
 
+///|
 fn contains_rtl_codepoint(s : String) -> Bool {
   for i = 0; i < s.length(); i = i + 1 {
     let cp = Char::to_int(Int::unsafe_to_char(s[i]))
-    if is_rtl_range(cp) { return true }
+    if is_rtl_range(cp) {
+      return true
+    }
   }
   false
 }
 
+///|
 fn ends_with_rtl_codepoint(s : String) -> Bool {
-  if s.length() == 0 { return false }
+  if s.length() == 0 {
+    return false
+  }
   let last = Char::to_int(Int::unsafe_to_char(s[s.length() - 1]))
   is_rtl_range(last)
 }
 
+///|
 fn is_rtl_range(cp : Int) -> Bool {
   // 近似的 RTL 范围集合（Hebrew, Arabic, Syriac, Thaana, NKo, Samaritan, Mandaic, Arabic Ext-A）
-  (cp >= 0x0590 && cp <= 0x08FF)
+  cp >= 0x0590 && cp <= 0x08FF
 }
 
 ///| 完整 Punycode 编码实现（RFC 3492），针对单个 label
@@ -1086,9 +1272,16 @@ fn punycode_encode_strict(label : String) -> String? {
   let mut output = ""
   // 基本码点（< 0x80）直接复制
   let mut basic_count = 0
-  for cp in codepoints { if cp < 0x80 { output = output + Int::unsafe_to_char(cp).to_string(); basic_count = basic_count + 1 } }
+  for cp in codepoints {
+    if cp < 0x80 {
+      output = output + Int::unsafe_to_char(cp).to_string()
+      basic_count = basic_count + 1
+    }
+  }
   let handled_basic = basic_count
-  if handled_basic > 0 && handled_basic < codepoints.length() { output = output + "-" }
+  if handled_basic > 0 && handled_basic < codepoints.length() {
+    output = output + "-"
+  }
 
   // 初始化
   let mut n = initial_n
@@ -1101,21 +1294,42 @@ fn punycode_encode_strict(label : String) -> String? {
   while handled < input_len {
     // 选取未处理的最小码点 m >= n
     let mut m = 0x10FFFF
-    for cp in codepoints { if cp >= n && cp < m { m = cp } }
-    if m < n { return None }
+    for cp in codepoints {
+      if cp >= n && cp < m {
+        m = cp
+      }
+    }
+    if m < n {
+      return None
+    }
     let increment = m - n
-    if (increment > (0x7FFFFFFF - delta) / (handled + 1)) { return None }
+    if increment > (0x7FFFFFFF - delta) / (handled + 1) {
+      return None
+    }
     delta = delta + increment * (handled + 1)
     n = m
     for cp in codepoints {
-      if cp < n { delta = delta + 1; if delta == 0 { return None } }
+      if cp < n {
+        delta = delta + 1
+        if delta == 0 {
+          return None
+        }
+      }
       if cp == n {
         // 编码 delta
         let mut q = delta
         let mut k = base
         while true {
-          let t = if k <= bias { t_min } else if k >= bias + t_max { t_max } else { k - bias }
-          if q < t { break }
+          let t = if k <= bias {
+            t_min
+          } else if k >= bias + t_max {
+            t_max
+          } else {
+            k - bias
+          }
+          if q < t {
+            break
+          }
           let code = t + (q - t) % (base - t)
           output = output + encode_digit(code)
           q = (q - t) / (base - t)
@@ -1142,11 +1356,11 @@ fn adapt_bias(delta : Int, num_points : Int, first_time : Bool) -> Int {
   let mut d = if first_time { delta / 700 } else { delta / 2 }
   let mut k = 0
   d = d + d / num_points
-  while d > ((base - t_min) * t_max) / 2 {
+  while d > (base - t_min) * t_max / 2 {
     d = d / (base - t_min)
     k = k + base
   }
-  k + (((base - t_min + 1) * d) / (d + skew))
+  k + (base - t_min + 1) * d / (d + skew)
 }
 
 ///| 将 0..35 的数字映射为 ASCII 字符（0-25 -> a-z, 26-35 -> 0-9）
@@ -1162,18 +1376,26 @@ fn encode_digit(d : Int) -> String {
 fn decode_digit_char(c : Char) -> Int? {
   let code = Char::to_int(c)
   // a-z
-  if code >= 0x61 && code <= 0x7A { return Some(code - 0x61) }
+  if code >= 0x61 && code <= 0x7A {
+    return Some(code - 0x61)
+  }
   // A-Z（容忍）
-  if code >= 0x41 && code <= 0x5A { return Some(code - 0x41) }
+  if code >= 0x41 && code <= 0x5A {
+    return Some(code - 0x41)
+  }
   // 0-9
-  if code >= 0x30 && code <= 0x39 { return Some(code - 0x30 + 26) }
+  if code >= 0x30 && code <= 0x39 {
+    return Some(code - 0x30 + 26)
+  }
   None
 }
 
 ///| 将码点数组转为字符串
 fn codepoints_to_string(cps : Array[Int]) -> String {
   let mut s = ""
-  for cp in cps { s = s + Int::unsafe_to_char(cp).to_string() }
+  for cp in cps {
+    s = s + Int::unsafe_to_char(cp).to_string()
+  }
   s
 }
 
@@ -1188,36 +1410,54 @@ fn punycode_decode_strict(puny : String) -> String? {
   // 找最后一个连字符，之前为基本码点
   let mut b = -1
   for i = 0; i < puny.length(); i = i + 1 {
-    if Int::unsafe_to_char(puny[i]) == '-' { b = i }
+    if Int::unsafe_to_char(puny[i]) == '-' {
+      b = i
+    }
   }
   let output : Array[Int] = []
   if b != -1 {
-    for i = 0; i < b; i = i + 1 { output.push(puny[i]) }
+    for i = 0; i < b; i = i + 1 {
+      output.push(puny[i])
+    }
   }
-
   let mut i = 0
   let mut n = initial_n
   let mut bias = initial_bias
   let mut idx = if b == -1 { 0 } else { b + 1 }
-
   while idx < puny.length() {
     let oldi = i
     let mut w = 1
     let mut k = base
     while true {
-      if idx >= puny.length() { return None }
+      if idx >= puny.length() {
+        return None
+      }
       let ch = Int::unsafe_to_char(puny[idx])
       idx = idx + 1
       match decode_digit_char(ch) {
         Some(digit) => {
           // i += digit * w （检查溢出）
-          if digit > 0 && w > 0x7FFFFFFF / digit { return None }
+          if digit > 0 && w > 0x7FFFFFFF / digit {
+            return None
+          }
           let add = digit * w
-          if i > 0x7FFFFFFF - add { return None }
+          if i > 0x7FFFFFFF - add {
+            return None
+          }
           i = i + add
-          let t = if k <= bias { t_min } else if k >= bias + t_max { t_max } else { k - bias }
-          if digit < t { break } else {
-            if w > 0x7FFFFFFF / (base - t) { return None }
+          let t = if k <= bias {
+            t_min
+          } else if k >= bias + t_max {
+            t_max
+          } else {
+            k - bias
+          }
+          if digit < t {
+            break
+          } else {
+            if w > 0x7FFFFFFF / (base - t) {
+              return None
+            }
             w = w * (base - t)
             k = k + base
           }
@@ -1230,40 +1470,59 @@ fn punycode_decode_strict(puny : String) -> String? {
     let q = i / out_len
     let r = i % out_len
     // n += q
-    if n > 0x10FFFF - q { return None }
+    if n > 0x10FFFF - q {
+      return None
+    }
     n = n + q
     // 在位置 r 插入 n
-    if r < 0 || r > output.length() { return None }
+    if r < 0 || r > output.length() {
+      return None
+    }
     let new_output : Array[Int] = []
-    for p = 0; p < r; p = p + 1 { new_output.push(output[p]) }
+    for p = 0; p < r; p = p + 1 {
+      new_output.push(output[p])
+    }
     new_output.push(n)
-    for p = r; p < output.length(); p = p + 1 { new_output.push(output[p]) }
+    for p = r; p < output.length(); p = p + 1 {
+      new_output.push(output[p])
+    }
     // 交换回 output（清空并逐个推入）
-    while output.length() > 0 { let _discarded = output.pop() }
-    for v in new_output { output.push(v) }
+    while output.length() > 0 {
+      let _discarded = output.pop()
+
+    }
+    for v in new_output {
+      output.push(v)
+    }
     i = r + 1
   }
-
   Some(codepoints_to_string(output))
 }
 
 ///| 将字符串转为 Unicode 码点数组
 fn to_codepoints(s : String) -> Array[Int] {
   let cps : Array[Int] = []
-  for i = 0; i < s.length(); i = i + 1 { cps.push(s[i]) }
+  for i = 0; i < s.length(); i = i + 1 {
+    cps.push(s[i])
+  }
   cps
 }
 
 ///| 检查字符串是否包含非 ASCII 字符（基于字节 >= 128 的近似判断）
 fn contains_non_ascii(s : String) -> Bool {
   for i = 0; i < s.length(); i = i + 1 {
-    if s[i] >= 128 { return true }
+    if s[i] >= 128 {
+      return true
+    }
   }
   false
 }
 
 ///| 百分号编码规范化：将 %hh/%hH/%Hh 统一为大写；可选地解码 unreserved 的 %HH
-fn normalize_percent_encoding_in_string(input : String, decode_unreserved : Bool) -> String {
+fn normalize_percent_encoding_in_string(
+  input : String,
+  decode_unreserved : Bool,
+) -> String {
   let mut out = ""
   let mut i = 0
   while i < input.length() {
@@ -1303,7 +1562,9 @@ fn normalize_percent_encoding_in_string(input : String, decode_unreserved : Bool
 /// - 压缩最长的连续零段为 ::（仅一次，选择最左）
 fn normalize_ipv6_literal(host_with_brackets : String) -> String {
   // 输入形如 "[2001:0DB8:0000:0000:0000:ff00:0042:8329]" 或带 zone-id
-  if !has_prefix(host_with_brackets, "[") { return host_with_brackets }
+  if !has_prefix(host_with_brackets, "[") {
+    return host_with_brackets
+  }
   match find_char(host_with_brackets, ']') {
     Some(end_idx) => {
       let inside = host_with_brackets.substring(start=1, end=end_idx)
@@ -1324,10 +1585,18 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
       let segments = split_ipv6_segments(core)
       let cleaned : Array[String] = []
       for seg in segments {
-        if seg.length() == 0 { cleaned.push("") } else {
+        if seg.length() == 0 {
+          cleaned.push("")
+        } else {
           let mut j = 0
-          while j < seg.length() && Int::unsafe_to_char(seg[j]) == '0' { j = j + 1 }
-          let trimmed = if j == seg.length() { "0" } else { seg.substring(start=j) }
+          while j < seg.length() && Int::unsafe_to_char(seg[j]) == '0' {
+            j = j + 1
+          }
+          let trimmed = if j == seg.length() {
+            "0"
+          } else {
+            seg.substring(start=j)
+          }
           cleaned.push(to_lowercase(trimmed))
         }
       }
@@ -1337,7 +1606,9 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
       if length >= 2 {
         // 拼接 start 之前
         for i = 0; i < start_idx; i = i + 1 {
-          if i > 0 { out = out + ":" }
+          if i > 0 {
+            out = out + ":"
+          }
           out = out + cleaned[i]
         }
         out = if out.length() > 0 { out + "::" } else { "::" }
@@ -1345,15 +1616,23 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
         let after = start_idx + length
         let mut first = true
         for i = after; i < cleaned.length(); i = i + 1 {
-          if !first { out = out + ":" } else { first = false }
+          if !first {
+            out = out + ":"
+          } else {
+            first = false
+          }
           out = out + cleaned[i]
         }
         // 特殊：全零地址 -> ::
-        if out.length() == 0 { out = "::" }
+        if out.length() == 0 {
+          out = "::"
+        }
       } else {
         // 无需压缩
         for i = 0; i < cleaned.length(); i = i + 1 {
-          if i > 0 { out = out + ":" }
+          if i > 0 {
+            out = out + ":"
+          }
           out = out + cleaned[i]
         }
       }
@@ -1371,15 +1650,25 @@ fn find_longest_zero_run(segments : Array[String]) -> (Int, Int) {
   while i < segments.length() {
     if segments[i] == "0" || segments[i].length() == 0 {
       let mut j = i
-      while j < segments.length() && (segments[j] == "0" || segments[j].length() == 0) { j = j + 1 }
+      while j < segments.length() &&
+            (segments[j] == "0" || segments[j].length() == 0) {
+        j = j + 1
+      }
       let len = j - i
-      if len > best_len { best_len = len; best_start = i }
+      if len > best_len {
+        best_len = len
+        best_start = i
+      }
       i = j
     } else {
       i = i + 1
     }
   }
-  if best_len < 2 { (0, 0) } else { (best_start, best_len) }
+  if best_len < 2 {
+    (0, 0)
+  } else {
+    (best_start, best_len)
+  }
 }
 
 // 已移除未使用的 punycode_encode_label（由 punycode_encode_strict 取代）
@@ -1433,7 +1722,9 @@ fn is_valid_userinfo(userinfo : String) -> Bool {
   // RFC 3986: userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
   for i = 0; i < userinfo.length(); i = i + 1 {
     let c = Int::unsafe_to_char(userinfo[i])
-    if not(is_unreserved_char(c) || is_sub_delim_char(c) || c == ':' || c == '%') {
+    if not(
+        is_unreserved_char(c) || is_sub_delim_char(c) || c == ':' || c == '%',
+      ) {
       return false
     }
   }
@@ -1457,10 +1748,9 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
   let mut core = ipv6
   if ipv6.contains("%") {
     match find_substring(ipv6, "%25") {
-      Some(idx) => {
+      Some(idx) =>
         // zone-id 可以为空或包含更多 pct-encoded/未编码的合法标识字符，这里仅对核心地址做校验
         core = ipv6.substring(start=0, end=idx)
-      }
       None => return false // 存在%但不是%25则非法
     }
   }

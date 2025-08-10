@@ -26,9 +26,7 @@ test "rust_url_additional_compat_tests" {
     .use_percent_query_encoding()
     .query_param("q", "hello world+plus")
     .build() {
-    Ok(uri) => {
-      assert_eq(uri.query(), Some("q=hello%20world%2Bplus"))
-    }
+    Ok(uri) => assert_eq(uri.query(), Some("q=hello%20world%2Bplus"))
     Err(e) => fail("Percent query encoding failed: " + e.to_string())
   }
   match
@@ -38,9 +36,7 @@ test "rust_url_additional_compat_tests" {
     .use_form_urlencoded_query_encoding()
     .query_param("q", "hello world+plus")
     .build() {
-    Ok(uri) => {
-      assert_eq(uri.query(), Some("q=hello+world%2Bplus"))
-    }
+    Ok(uri) => assert_eq(uri.query(), Some("q=hello+world%2Bplus"))
     Err(e) => fail("FormUrlencoded query encoding failed: " + e.to_string())
   }
 
@@ -55,7 +51,7 @@ test "rust_url_additional_compat_tests" {
 
   // 3) 更多 userinfo 边界案例（与 rust-url 行为一致）
   match Uri::parse("http://:@host/") {
-    Ok(uri) => {
+    Ok(uri) =>
       match uri.authority {
         Some(auth) => {
           assert_eq(auth.userinfo, Some(":"))
@@ -63,25 +59,22 @@ test "rust_url_additional_compat_tests" {
         }
         None => fail("Expected authority for http://:@host/")
       }
-    }
     Err(e) => fail("Should accept empty userinfo: " + e.to_string())
   }
   match Uri::parse("http://user:@host/") {
-    Ok(uri) => {
+    Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some("user:"))
         None => fail("Expected authority for http://user:@host/")
       }
-    }
     Err(e) => fail("Should accept empty password: " + e.to_string())
   }
   match Uri::parse("http://:pass@host/") {
-    Ok(uri) => {
+    Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some(":pass"))
         None => fail("Expected authority for http://:pass@host/")
       }
-    }
     Err(e) => fail("Should accept empty username: " + e.to_string())
   }
 
@@ -353,7 +346,7 @@ test "ipv6_support_comprehensive" {
      "ftp://[::ffff:192.0.2.1]/", // IPv4映射地址
      "http://[2001:db8:85a3::8a2e:370:7334]/", // 长IPv6地址
      "https://[::]/test", // 全零地址
-    "http://[fe80::1%25lo0]:3000/", // RFC 6874: zone-id 需以 %25 编码
+     "http://[fe80::1%25lo0]:3000/", // RFC 6874: zone-id 需以 %25 编码
   ]
   for uri_str in ipv6_uris {
     match Uri::parse(uri_str) {
@@ -363,7 +356,10 @@ test "ipv6_support_comprehensive" {
         assert_eq(host.has_prefix("["), true)
         assert_eq(host.has_suffix("]"), true)
       }
-      Err(e) => abort("IPv6 address should be supported: " + uri_str + ": " + e.to_string())
+      Err(e) =>
+        abort(
+          "IPv6 address should be supported: " + uri_str + ": " + e.to_string(),
+        )
     }
   }
 
@@ -405,7 +401,8 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(normalized.host(), Some("example.com"))
       assert_eq(normalized.path(), "/Path/With/Case")
     }
-    Err(e) => abort("Should lowercase host but keep path case: " + e.to_string())
+    Err(e) =>
+      abort("Should lowercase host but keep path case: " + e.to_string())
   }
 
   // 测试 normalize_with: 折叠重复斜杠
@@ -418,7 +415,8 @@ test "ipv6_zone_id_and_host_case_normalization" {
       let without_fold = uri.normalize()
       assert_eq(without_fold.path(), "//a///b////c")
     }
-    Err(e) => abort("Should parse path with duplicate slashes: " + e.to_string())
+    Err(e) =>
+      abort("Should parse path with duplicate slashes: " + e.to_string())
   }
 
   // 测试 normalize_with: IDNA 选项对 ASCII punycode 标签仅小写保留
@@ -432,7 +430,8 @@ test "ipv6_zone_id_and_host_case_normalization" {
   }
 
   // 百分号编码规范化：大写与解码 unreserved
-  match Uri::parse("http://example.com/%7e%2f%41%42%43?x=%7e%2D%5F#frag%2f%7E") {
+  match
+    Uri::parse("http://example.com/%7e%2f%41%42%43?x=%7e%2D%5F#frag%2f%7E") {
     Ok(uri) => {
       // 默认不规范化
       assert_eq(uri.path(), "/%7e%2f%41%42%43")
@@ -448,7 +447,9 @@ test "ipv6_zone_id_and_host_case_normalization" {
   // UTS-46 非过渡：保留 ß -> xn-- form
   match Uri::parse("http://faß.de/") {
     Ok(uri) => {
-      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_nontransitional())
+      let with_idna = uri.normalize_with(
+        default_normalization_options().use_idna_uts46_nontransitional(),
+      )
       assert_eq(with_idna.host(), Some("xn--fa-hia.de"))
       // 新增：解码回 Unicode
       let uni = domain_to_unicode("xn--fa-hia.de")
@@ -460,18 +461,20 @@ test "ipv6_zone_id_and_host_case_normalization" {
   // UTS-46 过渡：ß -> ss
   match Uri::parse("http://faß.de/") {
     Ok(uri) => {
-      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_transitional())
+      let with_idna = uri.normalize_with(
+        default_normalization_options().use_idna_uts46_transitional(),
+      )
       assert_eq(with_idna.host(), Some("fass.de"))
     }
     Err(e) => abort("Should parse faß.de transitional: " + e.to_string())
   }
 
-
-
   // 点映射（U+3002）
   match Uri::parse("http://www\u3002example\u3002com/") {
     Ok(uri) => {
-      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_nontransitional())
+      let with_idna = uri.normalize_with(
+        default_normalization_options().use_idna_uts46_nontransitional(),
+      )
       assert_eq(with_idna.host(), Some("www.example.com"))
     }
     Err(e) => abort("Should map ideographic full stop: " + e.to_string())
@@ -496,7 +499,9 @@ test "ipv6_zone_id_and_host_case_normalization" {
   // 严格：禁止混用两套阿拉伯-印度数字
   match Uri::parse("http://\u0661\u06F2.example/") {
     Ok(_uri) => {
-      let strict_ascii = domain_to_ascii_strict(to_lowercase("\u0661\u06F2.example"))
+      let strict_ascii = domain_to_ascii_strict(
+        to_lowercase("\u0661\u06F2.example"),
+      )
       assert_eq(strict_ascii, None)
     }
     Err(e) => abort("Should parse arabic-indic mixing: " + e.to_string())
@@ -4618,7 +4623,10 @@ test "rfc3986_relative_reference_standard_tests" {
     // 使用join_uri函数进行测试
     match join_uri(base_uri, relative_ref) {
       Ok(result) => assert_eq(result, expected)
-      Err(e) => abort("Case " + (i + 1).to_string() + " failed to resolve: " + e.to_string())
+      Err(e) =>
+        abort(
+          "Case " + (i + 1).to_string() + " failed to resolve: " + e.to_string(),
+        )
     }
   }
 }

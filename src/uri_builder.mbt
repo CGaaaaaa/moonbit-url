@@ -65,7 +65,10 @@ pub fn UriBuilder::with_options(options : BuilderOptions) -> UriBuilder {
 }
 
 ///| 设置查询参数编码策略
-pub fn UriBuilder::query_encoding(self : UriBuilder, encoding : QueryEncoding) -> UriBuilder {
+pub fn UriBuilder::query_encoding(
+  self : UriBuilder,
+  encoding : QueryEncoding,
+) -> UriBuilder {
   { ..self, options: { ..self.options, query_encoding: encoding } }
 }
 
@@ -75,7 +78,9 @@ pub fn UriBuilder::use_percent_query_encoding(self : UriBuilder) -> UriBuilder {
 }
 
 ///| 使用 application/x-www-form-urlencoded 编码策略（空格->+）
-pub fn UriBuilder::use_form_urlencoded_query_encoding(self : UriBuilder) -> UriBuilder {
+pub fn UriBuilder::use_form_urlencoded_query_encoding(
+  self : UriBuilder,
+) -> UriBuilder {
   self.query_encoding(QueryEncoding::FormUrlencoded)
 }
 
@@ -236,7 +241,12 @@ pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
 
   // 构建查询字符串
   let query = if self.query_params.length() > 0 {
-    Some(build_query_string_with_encoding(self.query_params, self.options.query_encoding))
+    Some(
+      build_query_string_with_encoding(
+        self.query_params,
+        self.options.query_encoding,
+      ),
+    )
   } else {
     None
   }
@@ -253,7 +263,10 @@ pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
 }
 
 ///| 使用给定规范化选项构建并规范化 URI
-pub fn UriBuilder::build_normalized_with(self : UriBuilder, options : NormalizationOptions) -> Result[Uri, UriError] {
+pub fn UriBuilder::build_normalized_with(
+  self : UriBuilder,
+  options : NormalizationOptions,
+) -> Result[Uri, UriError] {
   match self.build() {
     Ok(uri) => Ok(uri.normalize_with(options))
     Err(e) => Err(e)

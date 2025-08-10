@@ -49,7 +49,8 @@ fn utf8_encode_codepoint(codepoint : Int) -> String {
   } else if codepoint <= 0x7FF {
     let b1 = 0xC0 + (codepoint >> 6)
     let b2 = 0x80 + (codepoint & 0x3F)
-    Char::to_string(Int::unsafe_to_char(b1)) + Char::to_string(Int::unsafe_to_char(b2))
+    Char::to_string(Int::unsafe_to_char(b1)) +
+    Char::to_string(Int::unsafe_to_char(b2))
   } else if codepoint >= 0xD800 && codepoint <= 0xDFFF {
     // 代理项：返回替换字符 U+FFFD 的 UTF-8 编码
     utf8_encode_codepoint(0xFFFD)
@@ -79,20 +80,28 @@ fn utf8_encode_codepoint(codepoint : Int) -> String {
 fn should_percent_encode_byte(byte : Int, encode_set : EncodeSet) -> Bool {
   // unreserved: ALPHA / DIGIT / "-" / "." / "_" / "~"
   let is_alpha = (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
-  let is_digit = (byte >= 48 && byte <= 57)
-  let is_unreserved = is_alpha || is_digit || byte == 45 || byte == 46 || byte == 95 || byte == 126
-
+  let is_digit = byte >= 48 && byte <= 57
+  let is_unreserved = is_alpha ||
+    is_digit ||
+    byte == 45 ||
+    byte == 46 ||
+    byte == 95 ||
+    byte == 126
   if is_unreserved {
     return false
   }
-
   match encode_set {
     Component => true
-    Query => {
+    Query =>
       // 对查询使用严格 percent（空格编码为%20）
       // 需要编码的还包括保留分隔符 & = + % 等
-      byte == 32 || byte == 38 || byte == 61 || byte == 43 || byte == 37 || byte < 32 || byte > 126
-    }
+      byte == 32 ||
+      byte == 38 ||
+      byte == 61 ||
+      byte == 43 ||
+      byte == 37 ||
+      byte < 32 ||
+      byte > 126
   }
 }
 
@@ -108,72 +117,118 @@ fn is_valid_utf8_bytes(bytes : String) -> Bool {
     }
     // 2 字节: C2..DF 80..BF
     if b0 >= 0xC2 && b0 <= 0xDF {
-      if i + 1 >= bytes.length() { return false }
+      if i + 1 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
-      if !(b1 >= 0x80 && b1 <= 0xBF) { return false }
+      if !(b1 >= 0x80 && b1 <= 0xBF) {
+        return false
+      }
       i = i + 2
       continue
     }
     // 3 字节
     if b0 == 0xE0 {
-      if i + 2 >= bytes.length() { return false }
+      if i + 2 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
-      if !(b1 >= 0xA0 && b1 <= 0xBF) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
+      if !(b1 >= 0xA0 && b1 <= 0xBF) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
       i = i + 3
       continue
     }
     if (b0 >= 0xE1 && b0 <= 0xEC) || (b0 >= 0xEE && b0 <= 0xEF) {
-      if i + 2 >= bytes.length() { return false }
+      if i + 2 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
-      if !(b1 >= 0x80 && b1 <= 0xBF) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
+      if !(b1 >= 0x80 && b1 <= 0xBF) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
       i = i + 3
       continue
     }
     if b0 == 0xED {
-      if i + 2 >= bytes.length() { return false }
+      if i + 2 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       // 避免代理项 U+D800..U+DFFF
-      if !(b1 >= 0x80 && b1 <= 0x9F) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
+      if !(b1 >= 0x80 && b1 <= 0x9F) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
       i = i + 3
       continue
     }
     // 4 字节
     if b0 == 0xF0 {
-      if i + 3 >= bytes.length() { return false }
+      if i + 3 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      if !(b1 >= 0x90 && b1 <= 0xBF) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
-      if !(b3 >= 0x80 && b3 <= 0xBF) { return false }
+      if !(b1 >= 0x90 && b1 <= 0xBF) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
+      if !(b3 >= 0x80 && b3 <= 0xBF) {
+        return false
+      }
       i = i + 4
       continue
     }
     if b0 >= 0xF1 && b0 <= 0xF3 {
-      if i + 3 >= bytes.length() { return false }
+      if i + 3 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      if !(b1 >= 0x80 && b1 <= 0xBF) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
-      if !(b3 >= 0x80 && b3 <= 0xBF) { return false }
+      if !(b1 >= 0x80 && b1 <= 0xBF) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
+      if !(b3 >= 0x80 && b3 <= 0xBF) {
+        return false
+      }
       i = i + 4
       continue
     }
     if b0 == 0xF4 {
-      if i + 3 >= bytes.length() { return false }
+      if i + 3 >= bytes.length() {
+        return false
+      }
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      if !(b1 >= 0x80 && b1 <= 0x8F) { return false }
-      if !(b2 >= 0x80 && b2 <= 0xBF) { return false }
-      if !(b3 >= 0x80 && b3 <= 0xBF) { return false }
+      if !(b1 >= 0x80 && b1 <= 0x8F) {
+        return false
+      }
+      if !(b2 >= 0x80 && b2 <= 0xBF) {
+        return false
+      }
+      if !(b3 >= 0x80 && b3 <= 0xBF) {
+        return false
+      }
       i = i + 4
       continue
     }
@@ -191,10 +246,11 @@ pub fn percent_decode(input : String) -> Result[String, String] {
     if i + 2 < input.length() && input[i] == Char::to_int('%') {
       let hex1 = input[i + 1]
       let hex2 = input[i + 2]
-      match (
-        hex_char_to_int(Int::unsafe_to_char(hex1)),
-        hex_char_to_int(Int::unsafe_to_char(hex2)),
-      ) {
+      match
+        (
+          hex_char_to_int(Int::unsafe_to_char(hex1)),
+          hex_char_to_int(Int::unsafe_to_char(hex2)),
+        ) {
         (Some(h1), Some(h2)) => {
           bytes = bytes + Char::to_string(Int::unsafe_to_char(h1 * 16 + h2))
           i = i + 3
@@ -261,7 +317,10 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      let codepoint = ((b0 & 0x07) << 18) + ((b1 & 0x3F) << 12) + ((b2 & 0x3F) << 6) + (b3 & 0x3F)
+      let codepoint = ((b0 & 0x07) << 18) +
+        ((b1 & 0x3F) << 12) +
+        ((b2 & 0x3F) << 6) +
+        (b3 & 0x3F)
       out = out + Int::unsafe_to_char(codepoint).to_string()
       i = i + 4
       continue
@@ -270,7 +329,10 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      let codepoint = ((b0 & 0x07) << 18) + ((b1 & 0x3F) << 12) + ((b2 & 0x3F) << 6) + (b3 & 0x3F)
+      let codepoint = ((b0 & 0x07) << 18) +
+        ((b1 & 0x3F) << 12) +
+        ((b2 & 0x3F) << 6) +
+        (b3 & 0x3F)
       out = out + Int::unsafe_to_char(codepoint).to_string()
       i = i + 4
       continue
@@ -279,7 +341,10 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
       let b1 = bytes[i + 1]
       let b2 = bytes[i + 2]
       let b3 = bytes[i + 3]
-      let codepoint = ((b0 & 0x07) << 18) + ((b1 & 0x3F) << 12) + ((b2 & 0x3F) << 6) + (b3 & 0x3F)
+      let codepoint = ((b0 & 0x07) << 18) +
+        ((b1 & 0x3F) << 12) +
+        ((b2 & 0x3F) << 6) +
+        (b3 & 0x3F)
       out = out + Int::unsafe_to_char(codepoint).to_string()
       i = i + 4
       continue
@@ -297,7 +362,12 @@ pub fn encode_query_param(input : String) -> String {
     let byte = input[i]
     if byte == Char::to_int(' ') {
       result = result + "+"
-    } else if byte == Char::to_int('+') || byte == Char::to_int('&') || byte == Char::to_int('=') || byte == Char::to_int('%') || byte < 32 || byte > 126 {
+    } else if byte == Char::to_int('+') ||
+      byte == Char::to_int('&') ||
+      byte == Char::to_int('=') ||
+      byte == Char::to_int('%') ||
+      byte < 32 ||
+      byte > 126 {
       result = result + "%" + byte_to_hex(byte)
     } else {
       result = result + Char::to_string(Int::unsafe_to_char(byte))
@@ -419,6 +489,6 @@ pub fn percent_encode_non_ascii(input : String) -> String {
 ///| 是否为 unreserved 字节（ALPHA / DIGIT / "-" / "." / "_" / "~"），按字节判断
 pub fn is_unreserved_byte(byte : Int) -> Bool {
   let is_alpha = (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
-  let is_digit = (byte >= 48 && byte <= 57)
+  let is_digit = byte >= 48 && byte <= 57
   is_alpha || is_digit || byte == 45 || byte == 46 || byte == 95 || byte == 126
 }

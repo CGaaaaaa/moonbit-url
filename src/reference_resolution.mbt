@@ -9,8 +9,12 @@ fn get_parent_path(path : String) -> String {
       break
     }
   }
-  if last_slash < 0 { return "" }
-  if last_slash == 0 { return "/" }
+  if last_slash < 0 {
+    return ""
+  }
+  if last_slash == 0 {
+    return "/"
+  }
   path.substring(start=0, end=last_slash)
 }
 
@@ -52,9 +56,15 @@ fn has_absolute_uri_syntax(reference : String) -> Bool {
         None => reference.length()
       }
       let mut min_sep = slash_pos
-      if q_pos < min_sep { min_sep = q_pos }
-      if hash_pos < min_sep { min_sep = hash_pos }
-      if colon_pos >= min_sep { return false }
+      if q_pos < min_sep {
+        min_sep = q_pos
+      }
+      if hash_pos < min_sep {
+        min_sep = hash_pos
+      }
+      if colon_pos >= min_sep {
+        return false
+      }
       let scheme = reference.substring(start=0, end=colon_pos)
       is_valid_scheme_syntax(scheme)
     }
@@ -127,12 +137,10 @@ fn merge_paths(base : Uri, path : String) -> String {
     let base_parent = get_parent_path(base.path)
     if is_empty(base_parent) {
       path
+    } else if base_parent == "/" {
+      "/" + path
     } else {
-      if base_parent == "/" {
-        "/" + path
-      } else {
-        base_parent + "/" + path
-      }
+      base_parent + "/" + path
     }
   }
 }
@@ -252,9 +260,8 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
       // 统一先拒绝包含三冒号的引用
       if reference.contains(":::") {
         return Err(ParseError("Invalid reference format"))
-      } else
-      // 使用统一的绝对 URI 语法判定
-      if has_absolute_uri_syntax(reference) {
+        // 使用统一的绝对 URI 语法判定
+      } else if has_absolute_uri_syntax(reference) {
         // 如果引用是绝对URI，直接解析并返回
         match Uri::parse(reference) {
           Ok(ref_uri) => Ok(ref_uri.to_string())
@@ -399,9 +406,7 @@ pub fn ReferenceResolver::resolve(
   if has_absolute_uri_syntax(reference) {
     // 绝对URI，直接解析
     match Uri::parse(reference) {
-      Ok(ref_uri) => {
-        Ok(ref_uri)
-      }
+      Ok(ref_uri) => Ok(ref_uri)
       Err(e) => Err(e)
     }
   } else {
@@ -423,9 +428,7 @@ pub fn ReferenceResolver::resolve(
       fragment: None,
     }
     match resolve_reference(self.base, relative_uri) {
-      Ok(resolved) => {
-        Ok(resolved)
-      }
+      Ok(resolved) => Ok(resolved)
       Err(e) => Err(e)
     }
   }

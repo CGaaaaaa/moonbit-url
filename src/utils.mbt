@@ -72,19 +72,7 @@ pub fn hex_char_to_int(c : Char) -> Int? {
   }
 }
 
-///| 构建查询字符串
-pub fn build_query_string(params : Array[(String, String)]) -> String {
-  let parts : Array[String] = []
-  for i = 0; i < params.length(); i = i + 1 {
-    let (key, value) = params[i]
-    if value.length() == 0 {
-      parts.push(key)
-    } else {
-      parts.push(key + "=" + value)
-    }
-  }
-  parts.join("&")
-}
+// 删除: build_query_string 已不再使用，构造器根据编码策略自行处理
 
 ///| 解析查询字符串
 pub fn parse_query_string(query : String) -> Array[(String, String)] {

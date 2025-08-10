@@ -3,6 +3,7 @@
 ///| 查询参数编码方式
 pub enum QueryEncoding {
   Percent
+  FormUrlencoded
 }
 
 ///| 构建器配置选项
@@ -61,6 +62,21 @@ pub fn UriBuilder::with_options(options : BuilderOptions) -> UriBuilder {
     fragment: None,
     options,
   }
+}
+
+///| 设置查询参数编码策略
+pub fn UriBuilder::query_encoding(self : UriBuilder, encoding : QueryEncoding) -> UriBuilder {
+  { ..self, options: { ..self.options, query_encoding: encoding } }
+}
+
+///| 使用 Percent 编码策略（空格->%20）
+pub fn UriBuilder::use_percent_query_encoding(self : UriBuilder) -> UriBuilder {
+  self.query_encoding(QueryEncoding::Percent)
+}
+
+///| 使用 application/x-www-form-urlencoded 编码策略（空格->+）
+pub fn UriBuilder::use_form_urlencoded_query_encoding(self : UriBuilder) -> UriBuilder {
+  self.query_encoding(QueryEncoding::FormUrlencoded)
 }
 
 ///| 设置URI方案
@@ -220,7 +236,7 @@ pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
 
   // 构建查询字符串
   let query = if self.query_params.length() > 0 {
-    Some(build_query_string(self.query_params))
+    Some(build_query_string_with_encoding(self.query_params, self.options.query_encoding))
   } else {
     None
   }
@@ -234,6 +250,19 @@ pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
     Ok(uri) => Ok(uri.to_string())
     Err(e) => Err(e)
   }
+}
+
+///| 使用给定规范化选项构建并规范化 URI
+pub fn UriBuilder::build_normalized_with(self : UriBuilder, options : NormalizationOptions) -> Result[Uri, UriError] {
+  match self.build() {
+    Ok(uri) => Ok(uri.normalize_with(options))
+    Err(e) => Err(e)
+  }
+}
+
+///| 使用 Web 兼容预设构建并规范化 URI（UTS-46 非过渡等）
+pub fn UriBuilder::build_web(self : UriBuilder) -> Result[Uri, UriError] {
+  self.build_normalized_with(NormalizationOptions::web_compat())
 }
 
 ///| 克隆构建器
@@ -396,4 +425,29 @@ fn build_path_unified(
   } else {
     "/"
   }
+}
+
+///| 根据策略构建查询字符串（对键和值进行编码）
+fn build_query_string_with_encoding(
+  params : Array[(String, String)],
+  encoding : QueryEncoding,
+) -> String {
+  let parts : Array[String] = []
+  for i = 0; i < params.length(); i = i + 1 {
+    let (raw_key, raw_value) = params[i]
+    let key = match encoding {
+      QueryEncoding::Percent => percent_encode(raw_key, EncodeSet::query())
+      QueryEncoding::FormUrlencoded => encode_query_param(raw_key)
+    }
+    let value = match encoding {
+      QueryEncoding::Percent => percent_encode(raw_value, EncodeSet::query())
+      QueryEncoding::FormUrlencoded => encode_query_param(raw_value)
+    }
+    if raw_value.length() == 0 {
+      parts.push(key)
+    } else {
+      parts.push(key + "=" + value)
+    }
+  }
+  parts.join("&")
 }

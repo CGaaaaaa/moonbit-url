@@ -35,7 +35,7 @@ A comprehensive and RFC 3986 compliant URI parsing and manipulation library for 
 ### 🔐 **Percent Encoding**
 - **Multiple Contexts**: Component, query, path segment, and userinfo encoding
 - **RFC Compliant**: Proper encoding/decoding according to RFC 3986
-- **UTF-8 Support**: Full Chinese/Unicode character encoding support
+- **UTF-8 Only**: All percent-decoding yields UTF-8; invalid UTF-8 is rejected
 - **Custom Encode Sets**: Define custom character sets for encoding
 - **Validation**: Validate percent-encoded strings
 - **Form Encoding**: Support for application/x-www-form-urlencoded
@@ -554,7 +554,7 @@ moonbit-uri/
 
 The library includes a comprehensive test suite with **100% test success rate**, covering:
 
-- **99 test cases** ensuring RFC 3986 compliance
+ - **101 test cases** ensuring RFC 3986 compliance
 - Edge cases and error conditions  
 - Performance scenarios
 - Real-world usage patterns
@@ -562,7 +562,7 @@ The library includes a comprehensive test suite with **100% test success rate**,
 - Chinese/UTF-8 character encoding support
 
 ### Test Results
-- **Total tests**: 99 passed, 0 failed
+- **Total tests**: 101 passed, 0 failed
 - **RFC 3986 compliance**: Full standard reference resolution
 - **rust-url compatibility**: Edge case handling
 - **IPv6 support**: Comprehensive address validation
@@ -578,6 +578,20 @@ This library implements:
 - **RFC 3986** - Uniform Resource Identifier (URI): Generic Syntax
 - **RFC 3987** - Internationalized Resource Identifiers (IRIs) - Partial support
 - **HTML Living Standard** - URL API compatibility where applicable
+
+## 🌐 IDNA/UTS‑46 Status & Roadmap
+
+**Current behavior**
+- Host is ASCII-lowercased; optional dot normalization via `NormalizationOptions` (`host_collapse_dots`, `host_strip_trailing_dot`).
+- Optional IDNA handling is controlled by `enable_idna` and `idna_profile`.
+- Minimal UTS‑46 mapping: removes ZWJ/ZWNJ; maps U+3002/U+FF0E/U+FF61 to `.` (for splitting); preserves `ß` in Non‑Transitional, maps `ß -> ss` in Transitional.
+- Labels that already start with `xn--` are kept; otherwise non‑ASCII labels are mapped, minimally validated (length 1..63, no leading/trailing hyphen), then Punycode encoded. Failures fall back to the lowercased label (best‑effort), no hard error yet.
+- Not yet implemented: full contextual/Bidi checks, STD3 rules, full TR46 mapping table, strict IDNA2008 semantics.
+
+**Roadmap**
+- Implement full UTS‑46 mapping table and normalization (e.g., NFKC), contextual/Bidi checks, and `UseSTD3ASCIIRules`.
+- Provide strict IDNA2008 profile semantics and explicit error signaling instead of silent fallback; improve A‑label/U‑label round‑tripping.
+- Expand test vectors and document interoperability with browsers and `rust-url`.
 
 ## 🤝 Contributing
 

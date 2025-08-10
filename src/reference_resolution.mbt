@@ -9,10 +9,56 @@ fn get_parent_path(path : String) -> String {
       break
     }
   }
-  if last_slash <= 0 {
-    "/"
-  } else {
-    path.substring(start=0, end=last_slash)
+  if last_slash < 0 { return "" }
+  if last_slash == 0 { return "/" }
+  path.substring(start=0, end=last_slash)
+}
+
+// 使用通用工具函数：`utils.mbt` 中的 `is_alpha_char` 与 `is_alphanumeric_char`
+
+///| 校验scheme语法是否有效: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+fn is_valid_scheme_syntax(scheme : String) -> Bool {
+  if scheme.is_empty() {
+    return false
+  }
+  let first = Int::unsafe_to_char(scheme[0])
+  if not(is_alpha_char(first)) {
+    return false
+  }
+  for i = 1; i < scheme.length(); i = i + 1 {
+    let c = Int::unsafe_to_char(scheme[i])
+    if not(is_alphanumeric_char(c) || c == '+' || c == '-' || c == '.') {
+      return false
+    }
+  }
+  true
+}
+
+///| 严格判定字符串是否为绝对URI语法（基于RFC 3986）
+fn has_absolute_uri_syntax(reference : String) -> Bool {
+  match reference.find(":") {
+    Some(colon_pos) => {
+      // 首个冒号必须出现在任何'/'、'?'、'#'之前
+      let slash_pos = match reference.find("/") {
+        Some(p) => p
+        None => reference.length()
+      }
+      let q_pos = match reference.find("?") {
+        Some(p) => p
+        None => reference.length()
+      }
+      let hash_pos = match reference.find("#") {
+        Some(p) => p
+        None => reference.length()
+      }
+      let mut min_sep = slash_pos
+      if q_pos < min_sep { min_sep = q_pos }
+      if hash_pos < min_sep { min_sep = hash_pos }
+      if colon_pos >= min_sep { return false }
+      let scheme = reference.substring(start=0, end=colon_pos)
+      is_valid_scheme_syntax(scheme)
+    }
+    None => false
   }
 }
 
@@ -82,7 +128,11 @@ fn merge_paths(base : Uri, path : String) -> String {
     if is_empty(base_parent) {
       path
     } else {
-      base_parent + "/" + path
+      if base_parent == "/" {
+        "/" + path
+      } else {
+        base_parent + "/" + path
+      }
     }
   }
 }
@@ -199,17 +249,73 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
   }
   match Uri::parse(base) {
     Ok(base_uri) =>
-      // 检查引用是否是绝对URI
-      if reference.contains("://") {
+      // 统一先拒绝包含三冒号的引用
+      if reference.contains(":::") {
+        return Err(ParseError("Invalid reference format"))
+      } else
+      // 使用统一的绝对 URI 语法判定
+      if has_absolute_uri_syntax(reference) {
         // 如果引用是绝对URI，直接解析并返回
         match Uri::parse(reference) {
           Ok(ref_uri) => Ok(ref_uri.to_string())
           Err(e) => Err(e)
         }
       } else {
+        // 明确拒绝以 "://" 开头的无效相对引用
+        if reference.has_prefix("://") {
+          return Err(ParseError("Invalid reference format"))
+        }
         // 检查相对引用是否包含无效模式
         if reference.contains(":::") {
           return Err(ParseError("Invalid reference format"))
+        }
+
+        // 处理network-path引用: "//authority..."，继承base的scheme
+        if reference.has_prefix("//") {
+          let absolute = base_uri.scheme + ":" + reference
+          match Uri::parse(absolute) {
+            Ok(u) => {
+              let out = u.to_string()
+              return Ok(out)
+            }
+            Err(e) => return Err(e)
+          }
+        }
+
+        // 处理仅查询引用: "?y"，保留基路径，替换查询
+        if reference.has_prefix("?") {
+          let rel = Uri::{
+            scheme: "",
+            authority: None,
+            path: "",
+            query: Some(reference.substring(start=1)),
+            fragment: None,
+          }
+          match resolve_reference(base_uri, rel) {
+            Ok(resolved) => {
+              let out = resolved.to_string()
+              return Ok(out)
+            }
+            Err(e) => return Err(e)
+          }
+        }
+
+        // 处理仅片段引用: "#s"，保留基路径与查询，替换片段
+        if reference.has_prefix("#") {
+          let rel = Uri::{
+            scheme: "",
+            authority: None,
+            path: "",
+            query: None,
+            fragment: Some(reference.substring(start=1)),
+          }
+          match resolve_reference(base_uri, rel) {
+            Ok(resolved) => {
+              let out = resolved.to_string()
+              return Ok(out)
+            }
+            Err(e) => return Err(e)
+          }
         }
 
         // 相对引用，手动构造相对URI对象
@@ -221,7 +327,10 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
           fragment: None,
         }
         match resolve_reference(base_uri, relative_uri) {
-          Ok(resolved) => Ok(resolved.to_string())
+          Ok(resolved) => {
+            let out = resolved.to_string()
+            Ok(out)
+          }
           Err(e) => Err(e)
         }
       }
@@ -269,25 +378,37 @@ pub fn ReferenceResolver::resolve(
   self : ReferenceResolver,
   reference : String,
 ) -> Result[Uri, UriError] {
-  // 特殊处理空引用（指向当前文档）
+  // 特殊处理空引用：保留 base.query（与用户要求对齐），清除 fragment
   if reference.is_empty() {
-    return Ok({
+    let out = {
       scheme: self.base.scheme,
       authority: self.base.authority,
       path: self.base.path,
-      query: None,
+      query: self.base.query,
       fragment: None,
-    })
+    }
+    return Ok(out)
+  }
+
+  // 统一拒绝包含三冒号的引用（无论被当作绝对还是相对）
+  if reference.contains(":::") {
+    return Err(ParseError("Invalid reference format"))
   }
 
   // 检查是否是绝对URI
-  if reference.contains("://") {
+  if has_absolute_uri_syntax(reference) {
     // 绝对URI，直接解析
     match Uri::parse(reference) {
-      Ok(ref_uri) => Ok(ref_uri)
+      Ok(ref_uri) => {
+        Ok(ref_uri)
+      }
       Err(e) => Err(e)
     }
   } else {
+    // 明确拒绝以 "://" 开头的无效相对引用
+    if reference.has_prefix("://") {
+      return Err(ParseError("Invalid reference format"))
+    }
     // 检查相对引用是否包含无效模式
     if reference.contains(":::") {
       return Err(ParseError("Invalid reference format"))
@@ -301,7 +422,12 @@ pub fn ReferenceResolver::resolve(
       query: None,
       fragment: None,
     }
-    resolve_reference(self.base, relative_uri)
+    match resolve_reference(self.base, relative_uri) {
+      Ok(resolved) => {
+        Ok(resolved)
+      }
+      Err(e) => Err(e)
+    }
   }
 }
 

@@ -16,6 +16,104 @@ test "parse_simple_http" {
   }
 }
 
+///| rust-url 行为对齐的补充测试集
+test "rust_url_additional_compat_tests" {
+  // 1) 查询编码策略对齐：Percent 与 FormUrlencoded
+  match
+    UriBuilder::new()
+    .scheme("https")
+    .host("example.com")
+    .use_percent_query_encoding()
+    .query_param("q", "hello world+plus")
+    .build() {
+    Ok(uri) => {
+      assert_eq(uri.query(), Some("q=hello%20world%2Bplus"))
+    }
+    Err(e) => fail("Percent query encoding failed: " + e.to_string())
+  }
+  match
+    UriBuilder::new()
+    .scheme("https")
+    .host("example.com")
+    .use_form_urlencoded_query_encoding()
+    .query_param("q", "hello world+plus")
+    .build() {
+    Ok(uri) => {
+      assert_eq(uri.query(), Some("q=hello+world%2Bplus"))
+    }
+    Err(e) => fail("FormUrlencoded query encoding failed: " + e.to_string())
+  }
+
+  // 2) 非 ASCII（中文）百分号编码与解码
+  let zh = "中文"
+  let zh_encoded = percent_encode(zh, EncodeSet::query())
+  assert_eq(zh_encoded, "%E4%B8%AD%E6%96%87")
+  match percent_decode(zh_encoded) {
+    Ok(decoded) => assert_eq(decoded, zh)
+    Err(e) => fail("Percent decode UTF-8 failed: " + e.to_string())
+  }
+
+  // 3) 更多 userinfo 边界案例（与 rust-url 行为一致）
+  match Uri::parse("http://:@host/") {
+    Ok(uri) => {
+      match uri.authority {
+        Some(auth) => {
+          assert_eq(auth.userinfo, Some(":"))
+          assert_eq(auth.host, "host")
+        }
+        None => fail("Expected authority for http://:@host/")
+      }
+    }
+    Err(e) => fail("Should accept empty userinfo: " + e.to_string())
+  }
+  match Uri::parse("http://user:@host/") {
+    Ok(uri) => {
+      match uri.authority {
+        Some(auth) => assert_eq(auth.userinfo, Some("user:"))
+        None => fail("Expected authority for http://user:@host/")
+      }
+    }
+    Err(e) => fail("Should accept empty password: " + e.to_string())
+  }
+  match Uri::parse("http://:pass@host/") {
+    Ok(uri) => {
+      match uri.authority {
+        Some(auth) => assert_eq(auth.userinfo, Some(":pass"))
+        None => fail("Expected authority for http://:pass@host/")
+      }
+    }
+    Err(e) => fail("Should accept empty username: " + e.to_string())
+  }
+
+  // 4) 默认端口规范化：:80 (http), :443 (https) 应被移除
+  let http_with_default = Uri::parse("http://example.com:80/path").unwrap()
+  let http_norm = http_with_default.normalize()
+  assert_eq(http_norm.port(), None)
+  assert_eq(http_norm.to_string().contains(":80"), false)
+  let https_with_default = Uri::parse("https://example.com:443/path").unwrap()
+  let https_norm = https_with_default.normalize()
+  assert_eq(https_norm.port(), None)
+  assert_eq(https_norm.to_string().contains(":443"), false)
+
+  // 5) RFC 3986 相对引用更多示例（与 rust-url 行为一致）
+  let base = "http://a/b/c/d;p?q"
+  let more_cases = [
+    ("g;x", "http://a/b/c/g;x"),
+    ("g;x?y#s", "http://a/b/c/g;x?y#s"),
+    ("/g;x", "http://a/g;x"),
+    ("//g", "http://g"),
+    ("?y", "http://a/b/c/d;p?y"),
+    ("#s", "http://a/b/c/d;p?q#s"),
+  ]
+  for i = 0; i < more_cases.length(); i = i + 1 {
+    let (rel, expected) = more_cases[i]
+    match join_uri(base, rel) {
+      Ok(result) => assert_eq(result, expected)
+      Err(e) => fail("join_uri failed for '" + rel + "': " + e.to_string())
+    }
+  }
+}
+
 ///|
 test "parse_with_port" {
   match Uri::parse("https://example.com:8443/path?q=v#frag") {
@@ -88,7 +186,7 @@ test "uri_normalization" {
   let uri1 = Uri::parse("HTTP://EXAMPLE.COM:80/path/../document.pdf").unwrap()
   let normalized1 = uri1.normalize()
   assert_eq(normalized1.scheme(), "HTTP") // 简化版不改变大小写
-  assert_eq(normalized1.host(), Some("EXAMPLE.COM"))
+  assert_eq(normalized1.host(), Some("example.com"))
   assert_eq(normalized1.port(), None) // 默认端口被移除
 }
 
@@ -255,7 +353,7 @@ test "ipv6_support_comprehensive" {
      "ftp://[::ffff:192.0.2.1]/", // IPv4映射地址
      "http://[2001:db8:85a3::8a2e:370:7334]/", // 长IPv6地址
      "https://[::]/test", // 全零地址
-     "http://[fe80::1%lo0]:3000/", // 带区域ID的地址
+    "http://[fe80::1%25lo0]:3000/", // RFC 6874: zone-id 需以 %25 编码
   ]
   for uri_str in ipv6_uris {
     match Uri::parse(uri_str) {
@@ -265,9 +363,7 @@ test "ipv6_support_comprehensive" {
         assert_eq(host.has_prefix("["), true)
         assert_eq(host.has_suffix("]"), true)
       }
-      Err(_) =>
-        // 某些复杂格式可能不支持，这也是可接受的
-        println("Complex IPv6 format not supported: " + uri_str)
+      Err(e) => abort("IPv6 address should be supported: " + uri_str + ": " + e.to_string())
     }
   }
 
@@ -284,6 +380,126 @@ test "ipv6_support_comprehensive" {
       Ok(_) => abort("Invalid IPv6 address should fail: " + invalid_uri)
       Err(_) => () // 预期失败
     }
+  }
+}
+
+///|
+test "ipv6_zone_id_and_host_case_normalization" {
+  // zone-id 基本用例
+  match Uri::parse("http://[fe80::1%25en0]:8080/") {
+    Ok(uri) => {
+      assert_eq(uri.host(), Some("[fe80::1%25en0]"))
+      assert_eq(uri.port(), Some(8080))
+    }
+    Err(e) => abort("Should parse IPv6 with zone-id: " + e.to_string())
+  }
+
+  // host 小写化（域名）但 path 保留大小写
+  match Uri::parse("http://EXAMPLE.COM/Path/With/Case") {
+    Ok(uri) => {
+      // 解析阶段保留原样
+      assert_eq(uri.host(), Some("EXAMPLE.COM"))
+      assert_eq(uri.path(), "/Path/With/Case")
+      // 规范化后 host 小写，path 保持大小写
+      let normalized = uri.normalize()
+      assert_eq(normalized.host(), Some("example.com"))
+      assert_eq(normalized.path(), "/Path/With/Case")
+    }
+    Err(e) => abort("Should lowercase host but keep path case: " + e.to_string())
+  }
+
+  // 测试 normalize_with: 折叠重复斜杠
+  match Uri::parse("http://example.com//a///b////c") {
+    Ok(uri) => {
+      let opts = default_normalization_options().with_fold_duplicate_slashes()
+      let with_fold = uri.normalize_with(opts)
+      assert_eq(with_fold.path(), "/a/b/c")
+      // 默认 normalize 不折叠
+      let without_fold = uri.normalize()
+      assert_eq(without_fold.path(), "//a///b////c")
+    }
+    Err(e) => abort("Should parse path with duplicate slashes: " + e.to_string())
+  }
+
+  // 测试 normalize_with: IDNA 选项对 ASCII punycode 标签仅小写保留
+  match Uri::parse("http://XN--EXAMPLE-OVA.com/") {
+    Ok(uri) => {
+      let opts = default_normalization_options().use_idna_uts46_nontransitional()
+      let with_idna = uri.normalize_with(opts)
+      assert_eq(with_idna.host(), Some("xn--example-ova.com"))
+    }
+    Err(e) => abort("Should parse punycode-like hostname: " + e.to_string())
+  }
+
+  // 百分号编码规范化：大写与解码 unreserved
+  match Uri::parse("http://example.com/%7e%2f%41%42%43?x=%7e%2D%5F#frag%2f%7E") {
+    Ok(uri) => {
+      // 默认不规范化
+      assert_eq(uri.path(), "/%7e%2f%41%42%43")
+      // web 兼容预设：解码 unreserved 并大写百分号编码
+      let normalized = uri.normalize_with(NormalizationOptions::web_compat())
+      assert_eq(normalized.path(), "/~%2FABC")
+      assert_eq(normalized.query().unwrap(), "x=~-_")
+      assert_eq(normalized.fragment().unwrap(), "frag%2F~")
+    }
+    Err(e) => abort("Should normalize percent-encoding: " + e.to_string())
+  }
+
+  // UTS-46 非过渡：保留 ß -> xn-- form
+  match Uri::parse("http://faß.de/") {
+    Ok(uri) => {
+      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_nontransitional())
+      assert_eq(with_idna.host(), Some("xn--fa-hia.de"))
+      // 新增：解码回 Unicode
+      let uni = domain_to_unicode("xn--fa-hia.de")
+      assert_eq(uni, "faß.de")
+    }
+    Err(e) => abort("Should parse faß.de: " + e.to_string())
+  }
+
+  // UTS-46 过渡：ß -> ss
+  match Uri::parse("http://faß.de/") {
+    Ok(uri) => {
+      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_transitional())
+      assert_eq(with_idna.host(), Some("fass.de"))
+    }
+    Err(e) => abort("Should parse faß.de transitional: " + e.to_string())
+  }
+
+
+
+  // 点映射（U+3002）
+  match Uri::parse("http://www\u3002example\u3002com/") {
+    Ok(uri) => {
+      let with_idna = uri.normalize_with(default_normalization_options().use_idna_uts46_nontransitional())
+      assert_eq(with_idna.host(), Some("www.example.com"))
+    }
+    Err(e) => abort("Should map ideographic full stop: " + e.to_string())
+  }
+
+  // 严格 ContextO：中点必须在 l·l 中
+  match Uri::parse("http://l\u00B7a.example/") {
+    Ok(uri) => {
+      let strict = default_normalization_options().use_idna_2008_strict()
+      let after = uri.normalize_with(strict)
+      // 严格模式下，我们提供 domain_to_ascii_strict 以明确失败；normalize_with 仍保守
+      let host = after.host().unwrap()
+      // normalize_with 在启用 IDNA 时会 Punycode 编码非 ASCII 标签
+      assert_eq(host, "xn--la-0ea.example")
+      // 直接调用严格 API 应为 None
+      let strict_ascii = domain_to_ascii_strict("l\u00B7a.example")
+      assert_eq(strict_ascii, None)
+    }
+    Err(e) => abort("Should parse label with middle dot: " + e.to_string())
+  }
+
+  // 严格：禁止混用两套阿拉伯-印度数字
+  match Uri::parse("http://\u0661\u06F2.example/") {
+    Ok(_uri) => {
+      let strict_ascii = domain_to_ascii_strict(to_lowercase("\u0661\u06F2.example"))
+      assert_eq(strict_ascii, None)
+    }
+    Err(e) => abort("Should parse arabic-indic mixing: " + e.to_string())
   }
 }
 
@@ -3938,7 +4154,7 @@ test "rust_url_edge_cases" {
       assert_eq(uri.path(), "/x")
       match uri.authority {
         Some(auth) => {
-          assert_eq(auth.userinfo, Some("")) // 空用户信息
+          assert_eq(auth.userinfo, Some(":")) // 保留原样的":"
           assert_eq(auth.host, "test")
           assert_eq(auth.port, None)
         }
@@ -4156,7 +4372,7 @@ test "boundary_cases_and_compatibility" {
       assert_eq(uri.scheme, "non-special")
       match uri.authority {
         Some(auth) => {
-          assert_eq(auth.userinfo, Some("")) // 规范化后的空用户信息
+          assert_eq(auth.userinfo, Some(":")) // 保留原样的":"
           assert_eq(auth.host, "test")
         }
         None => fail("Expected authority for non-special scheme")
@@ -4339,7 +4555,7 @@ test "rust_url_compatibility_cases" {
       match uri.authority {
         Some(auth) => {
           // 验证userinfo和host的处理
-          assert_eq(auth.userinfo, Some("")) // 空userinfo
+          assert_eq(auth.userinfo, Some(":")) // 保留原样的":"
           assert_eq(auth.host, "test") // host部分
           assert_eq(auth.port, None) // 无端口
         }
@@ -4396,46 +4612,13 @@ test "rfc3986_relative_reference_standard_tests" {
     ("g/./h", "http://a/b/c/g/h"), // 53 - 路径中的./应该被移除
     ("g/../h", "http://a/b/c/h"), // 54 - 路径中的../应该被处理
   ]
-  println("RFC 3986相对引用解析标准测试:")
-  let mut passed = 0
-  let mut failed = 0
   for i = 0; i < test_cases.length(); i = i + 1 {
     let (relative_ref, expected) = test_cases[i]
 
     // 使用join_uri函数进行测试
     match join_uri(base_uri, relative_ref) {
-      Ok(result) =>
-        if result == expected {
-          passed = passed + 1
-        } else {
-          failed = failed + 1
-          println("案例 " + (i + 1).to_string() + " 失败:")
-          println("  输入: '" + relative_ref + "'")
-          println("  期望: '" + expected + "'")
-          println("  实际: '" + result + "'")
-        }
-      Err(e) => {
-        failed = failed + 1
-        println(
-          "案例 " + (i + 1).to_string() + " 解析失败: " + e.to_string(),
-        )
-      }
+      Ok(result) => assert_eq(result, expected)
+      Err(e) => abort("Case " + (i + 1).to_string() + " failed to resolve: " + e.to_string())
     }
-  }
-  println(
-    "测试结果: " +
-    passed.to_string() +
-    " 通过, " +
-    failed.to_string() +
-    " 失败",
-  )
-
-  // 如果有失败案例，不要让整个测试失败，而是报告问题
-  if failed > 0 {
-    println(
-      "警告: " +
-      failed.to_string() +
-      " 个RFC 3986标准案例未通过，需要进一步优化",
-    )
   }
 }

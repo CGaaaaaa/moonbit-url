@@ -399,7 +399,7 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
   Ok(out)
 }
 
-///| 编码URL查询参数（application/x-www-form-urlencoded：空格->+，其他按%HH）
+///| 编码URL查询参数（application/x-www-form-urlencoded：空格->+，其他字符UTF-8编码）
 pub fn encode_query_param(input : String) -> String {
   let mut result = ""
   let mut i = 0
@@ -409,18 +409,17 @@ pub fn encode_query_param(input : String) -> String {
       result = result + "+"
       i = i + 1
     } else if codepoint <= 0x7F {
-      // ASCII 字符直接处理
-      // 根据 application/x-www-form-urlencoded 规范，编码所有非字母数字字符
-      // 除了 unreserved 字符：ALPHA / DIGIT / "-" / "." / "_" / "~"
+      // ASCII 字符处理：根据 application/x-www-form-urlencoded 规范
+      // 只保留 unreserved 字符：ALPHA / DIGIT / "-" / "." / "_" / "~"
       let is_alpha = (codepoint >= 65 && codepoint <= 90) ||
         (codepoint >= 97 && codepoint <= 122)
       let is_digit = codepoint >= 48 && codepoint <= 57
       let is_unreserved = is_alpha ||
         is_digit ||
-        codepoint == 45 ||
-        codepoint == 46 ||
-        codepoint == 95 ||
-        codepoint == 126
+        codepoint == 45 ||  // -
+        codepoint == 46 ||  // .
+        codepoint == 95 ||  // _
+        codepoint == 126    // ~
       if is_unreserved {
         result = result + Char::to_string(Int::unsafe_to_char(codepoint))
       } else {
@@ -436,6 +435,7 @@ pub fn encode_query_param(input : String) -> String {
           let full_codepoint = 0x10000 +
             ((codepoint - 0xD800) << 10) +
             (low_surrogate - 0xDC00)
+          // 转换为UTF-8并编码
           let utf8_bytes = utf8_encode_codepoint(full_codepoint)
           for j = 0; j < utf8_bytes.length(); j = j + 1 {
             let b = utf8_bytes[j]
@@ -469,7 +469,7 @@ pub fn encode_query_param(input : String) -> String {
       }
       i = i + 1
     } else {
-      // 其他非 ASCII：先转为 UTF-8 字节序列，再逐字节百分号编码
+      // 其他非ASCII字符：转换为UTF-8字节序列，然后逐字节百分号编码
       let utf8_bytes = utf8_encode_codepoint(codepoint)
       for j = 0; j < utf8_bytes.length(); j = j + 1 {
         let b = utf8_bytes[j]

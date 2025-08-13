@@ -379,7 +379,6 @@ fn parse_path_segments(path : String) -> Array[String] {
   let segments : Array[String] = []
   let start = if path.has_prefix("/") { 1 } else { 0 }
   
-  // 使用 StringBuilder 优化字符串拼接
   let mut builder = StringBuilder::new()
   
   for i = start; i < path.length(); i = i + 1 {

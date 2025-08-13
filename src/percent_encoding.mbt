@@ -416,10 +416,10 @@ pub fn encode_query_param(input : String) -> String {
       let is_digit = codepoint >= 48 && codepoint <= 57
       let is_unreserved = is_alpha ||
         is_digit ||
-        codepoint == 45 ||  // -
-        codepoint == 46 ||  // .
-        codepoint == 95 ||  // _
-        codepoint == 126    // ~
+        codepoint == 45 || // -
+        codepoint == 46 || // .
+        codepoint == 95 || // _
+        codepoint == 126 // ~
       if is_unreserved {
         result = result + Char::to_string(Int::unsafe_to_char(codepoint))
       } else {

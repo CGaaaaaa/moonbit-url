@@ -1144,7 +1144,9 @@ fn check_contexto_ok(label : String) -> Bool {
         let low_surrogate = label[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           if full_codepoint == 0x00B7 { // MIDDLE DOT
             let prev_ok = if i > 0 {
               let prev_codepoint = label[i - 1]
@@ -1152,7 +1154,9 @@ fn check_contexto_ok(label : String) -> Bool {
                 if i > 1 {
                   let prev_low = label[i - 2]
                   if prev_low >= 0xDC00 && prev_low <= 0xDFFF {
-                    let prev_full = 0x10000 + ((prev_codepoint - 0xD800) << 10) + (prev_low - 0xDC00)
+                    let prev_full = 0x10000 +
+                      ((prev_codepoint - 0xD800) << 10) +
+                      (prev_low - 0xDC00)
                     prev_full == 0x006C // 'l'
                   } else {
                     false
@@ -1172,7 +1176,9 @@ fn check_contexto_ok(label : String) -> Bool {
                 if i + 3 < label.length() {
                   let next_low = label[i + 3]
                   if next_low >= 0xDC00 && next_low <= 0xDFFF {
-                    let next_full = 0x10000 + ((next_codepoint - 0xD800) << 10) + (next_low - 0xDC00)
+                    let next_full = 0x10000 +
+                      ((next_codepoint - 0xD800) << 10) +
+                      (next_low - 0xDC00)
                     next_full == 0x006C // 'l'
                   } else {
                     false
@@ -1197,7 +1203,9 @@ fn check_contexto_ok(label : String) -> Bool {
                 if i + 3 < label.length() {
                   let next_low = label[i + 3]
                   if next_low >= 0xDC00 && next_low <= 0xDFFF {
-                    let next_full = 0x10000 + ((next_codepoint - 0xD800) << 10) + (next_low - 0xDC00)
+                    let next_full = 0x10000 +
+                      ((next_codepoint - 0xD800) << 10) +
+                      (next_low - 0xDC00)
                     is_greek_letter(next_full)
                   } else {
                     false
@@ -1299,8 +1307,11 @@ fn contains_kana(s : String) -> Bool {
         let low_surrogate = s[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
-          if (full_codepoint >= 0x3040 && full_codepoint <= 0x309F) || (full_codepoint >= 0x30A0 && full_codepoint <= 0x30FF) {
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
+          if (full_codepoint >= 0x3040 && full_codepoint <= 0x309F) ||
+            (full_codepoint >= 0x30A0 && full_codepoint <= 0x30FF) {
             return true
           }
           i = i + 2
@@ -1315,7 +1326,8 @@ fn contains_kana(s : String) -> Bool {
       i = i + 1
     } else {
       // 其他字符直接检查
-      if (codepoint >= 0x3040 && codepoint <= 0x309F) || (codepoint >= 0x30A0 && codepoint <= 0x30FF) {
+      if (codepoint >= 0x3040 && codepoint <= 0x309F) ||
+        (codepoint >= 0x30A0 && codepoint <= 0x30FF) {
         return true
       }
       i = i + 1
@@ -1369,7 +1381,9 @@ fn contains_rtl_codepoint(s : String) -> Bool {
         let low_surrogate = s[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           if is_rtl_range(full_codepoint) {
             return true
           }
@@ -1407,7 +1421,9 @@ fn ends_with_rtl_codepoint(s : String) -> Bool {
       let high_surrogate = s[i - 1]
       if high_surrogate >= 0xD800 && high_surrogate <= 0xDBFF {
         // 计算完整的Unicode码点
-        let full_codepoint = 0x10000 + ((high_surrogate - 0xD800) << 10) + (codepoint - 0xDC00)
+        let full_codepoint = 0x10000 +
+          ((high_surrogate - 0xD800) << 10) +
+          (codepoint - 0xDC00)
         return is_rtl_range(full_codepoint)
       }
     }
@@ -1682,7 +1698,9 @@ fn to_codepoints(s : String) -> Array[Int] {
         let low_surrogate = s[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           cps.push(full_codepoint)
           i = i + 2
         } else {
@@ -1719,7 +1737,9 @@ fn contains_non_ascii(s : String) -> Bool {
         let low_surrogate = s[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           if full_codepoint > 127 {
             return true
           }

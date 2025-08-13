@@ -37,7 +37,9 @@ pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
         let low_surrogate = input[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           let utf8_bytes = utf8_encode_codepoint(full_codepoint)
           for j = 0; j < utf8_bytes.length(); j = j + 1 {
             let b = utf8_bytes[j]
@@ -410,10 +412,15 @@ pub fn encode_query_param(input : String) -> String {
       // ASCII 字符直接处理
       // 根据 application/x-www-form-urlencoded 规范，编码所有非字母数字字符
       // 除了 unreserved 字符：ALPHA / DIGIT / "-" / "." / "_" / "~"
-      let is_alpha = (codepoint >= 65 && codepoint <= 90) || (codepoint >= 97 && codepoint <= 122)
+      let is_alpha = (codepoint >= 65 && codepoint <= 90) ||
+        (codepoint >= 97 && codepoint <= 122)
       let is_digit = codepoint >= 48 && codepoint <= 57
-      let is_unreserved = is_alpha || is_digit || codepoint == 45 || codepoint == 46 || codepoint == 95 || codepoint == 126
-      
+      let is_unreserved = is_alpha ||
+        is_digit ||
+        codepoint == 45 ||
+        codepoint == 46 ||
+        codepoint == 95 ||
+        codepoint == 126
       if is_unreserved {
         result = result + Char::to_string(Int::unsafe_to_char(codepoint))
       } else {
@@ -426,7 +433,9 @@ pub fn encode_query_param(input : String) -> String {
         let low_surrogate = input[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           let utf8_bytes = utf8_encode_codepoint(full_codepoint)
           for j = 0; j < utf8_bytes.length(); j = j + 1 {
             let b = utf8_bytes[j]
@@ -579,7 +588,9 @@ pub fn percent_encode_non_ascii(input : String) -> String {
         let low_surrogate = input[i + 1]
         if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
           // 计算完整的Unicode码点
-          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let full_codepoint = 0x10000 +
+            ((codepoint - 0xD800) << 10) +
+            (low_surrogate - 0xDC00)
           let utf8_bytes = utf8_encode_codepoint(full_codepoint)
           for j = 0; j < utf8_bytes.length(); j = j + 1 {
             let b = utf8_bytes[j]

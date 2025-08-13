@@ -375,23 +375,29 @@ fn parse_path_segments(path : String) -> Array[String] {
   if path == "/" {
     return ["/"] // 使用特殊标记表示根路径
   }
+  
   let segments : Array[String] = []
-  let mut current = ""
   let start = if path.has_prefix("/") { 1 } else { 0 }
+  
+  // 使用 StringBuilder 优化字符串拼接
+  let mut builder = StringBuilder::new()
+  
   for i = start; i < path.length(); i = i + 1 {
     let char_code = path[i]
     if char_code == Char::to_int('/') {
-      if current.length() > 0 {
-        segments.push(current)
-        current = ""
+      if builder.length() > 0 {
+        segments.push(builder.build())
+        builder = StringBuilder::new()
       }
     } else {
-      current = current + Char::to_string(Int::unsafe_to_char(char_code))
+      builder = builder.append(Char::to_string(Int::unsafe_to_char(char_code)))
     }
   }
-  if current.length() > 0 {
-    segments.push(current)
+  
+  if builder.length() > 0 {
+    segments.push(builder.build())
   }
+  
   segments
 }
 
@@ -463,4 +469,87 @@ fn build_query_string_with_encoding(
     }
   }
   parts.join("&")
+}
+
+// ==================== 性能优化 ====================
+
+///| 字符串构建器 - 用于优化字符串拼接性能
+pub struct StringBuilder {
+  parts : Array[String]
+}
+
+///| 创建新的字符串构建器
+pub fn StringBuilder::new() -> StringBuilder {
+  { parts: [] }
+}
+
+///| 添加字符串片段
+pub fn StringBuilder::append(self : StringBuilder, s : String) -> StringBuilder {
+  self.parts.push(s)
+  self
+}
+
+///| 构建最终字符串
+pub fn StringBuilder::build(self : StringBuilder) -> String {
+  self.parts.join("")
+}
+
+///| 获取当前长度
+pub fn StringBuilder::length(self : StringBuilder) -> Int {
+  let mut total = 0
+  for part in self.parts {
+    total = total + part.length()
+  }
+  total
+}
+
+///| 编码缓存 - 避免重复编码相同的字符串
+pub struct EncodingCache {
+  percent_cache : Array[(String, String)]
+  form_cache : Array[(String, String)]
+}
+
+///| 创建新的编码缓存
+pub fn EncodingCache::new() -> EncodingCache {
+  { percent_cache: [], form_cache: [] }
+}
+
+///| 获取缓存的编码结果
+pub fn EncodingCache::get_cached_encoding(
+  self : EncodingCache,
+  input : String,
+  encoding : QueryEncoding,
+) -> String? {
+  let cache = match encoding {
+    QueryEncoding::Percent => self.percent_cache
+    QueryEncoding::FormUrlencoded => self.form_cache
+  }
+  for i = 0; i < cache.length(); i = i + 1 {
+    let (key, value) = cache[i]
+    if key == input {
+      return Some(value)
+    }
+  }
+  None
+}
+
+///| 缓存编码结果
+pub fn EncodingCache::cache_encoding(
+  self : EncodingCache,
+  input : String,
+  encoded : String,
+  encoding : QueryEncoding,
+) -> EncodingCache {
+  match encoding {
+    QueryEncoding::Percent => {
+      let new_cache = self.percent_cache.copy()
+      new_cache.push((input, encoded))
+      { ..self, percent_cache: new_cache }
+    }
+    QueryEncoding::FormUrlencoded => {
+      let new_cache = self.form_cache.copy()
+      new_cache.push((input, encoded))
+      { ..self, form_cache: new_cache }
+    }
+  }
 }

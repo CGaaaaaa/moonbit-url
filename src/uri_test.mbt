@@ -4750,55 +4750,55 @@ test "user_provided_encoding_test" {
   // 测试中文字符编码
   let chinese_text = "测试"
   let chinese_encoded = encode_query_param(chinese_text)
-  inspect(chinese_encoded, content="%4B%D5")
+  inspect(chinese_encoded, content="%E6%B5%8B%E8%AF%95")
   
   // 测试单个中文字符
   let single_chinese = "中"
   let single_encoded = encode_query_param(single_chinese)
-  inspect(single_encoded, content="%2D")
+  inspect(single_encoded, content="%E4%B8%AD")
   
   // 测试中英文混合
   let mixed_text = "hello世界test"
   let mixed_encoded = encode_query_param(mixed_text)
-  inspect(mixed_encoded, content="hello%16%4Ctest")
+  inspect(mixed_encoded, content="hello%E4%B8%96%E7%95%8Ctest")
   
   // 测试常见中文词汇
   let common_chinese = "你好世界"
   let common_encoded = encode_query_param(common_chinese)
-  inspect(common_encoded, content="%60%7D%16%4C")
+  inspect(common_encoded, content="%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C")
   
   // 测试Unicode特殊字符
   let emoji = "😀"
   let emoji_encoded = encode_query_param(emoji)
-  inspect(emoji_encoded, content="%3D%00")
+  inspect(emoji_encoded, content="%F0%9F%98%80")
   
   // 测试Unicode符号
   let unicode_symbols = "★☆♠♣♥♦"
   let symbols_encoded = encode_query_param(unicode_symbols)
-  inspect(symbols_encoded, content="%05%06%60%63%65%66")
+  inspect(symbols_encoded, content="%E2%98%85%E2%98%86%E2%99%A0%E2%99%A3%E2%99%A5%E2%99%A6")
   
   // 测试日文字符
   let japanese = "こんにちは"
   let japanese_encoded = encode_query_param(japanese)
-  inspect(japanese_encoded, content="%53%93%6B%61%6F")
+  inspect(japanese_encoded, content="%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF")
   
   // 测试韩文字符
   let korean = "안녕하세요"
   let korean_encoded = encode_query_param(korean)
-  inspect(korean_encoded, content="%48%55%58%38%94")
+  inspect(korean_encoded, content="%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94")
   
   // 测试混合Unicode字符
   let mixed_unicode = "Hello世界🌍안녕"
   let mixed_unicode_encoded = encode_query_param(mixed_unicode)
-  inspect(mixed_unicode_encoded, content="Hello%16%4C%3C%0D%48%55")
+  inspect(mixed_unicode_encoded, content="Hello%E4%B8%96%E7%95%8C%F0%9F%8C%8D%EC%95%88%EB%85%95")
   
   // 测试Unicode数学符号
   let math_symbols = "∑∆∇∀∃"
   let math_encoded = encode_query_param(math_symbols)
-  inspect(math_encoded, content="%11%06%07%00%03")
+  inspect(math_encoded, content="%E2%88%91%E2%88%86%E2%88%87%E2%88%80%E2%88%83")
   
   // 测试Unicode箭头符号
   let arrows = "←→↑↓⇒⇐"
   let arrows_encoded = encode_query_param(arrows)
-  inspect(arrows_encoded, content="%90%92%91%93%D2%D0")
+  inspect(arrows_encoded, content="%E2%86%90%E2%86%92%E2%86%91%E2%86%93%E2%87%92%E2%87%90")
 }

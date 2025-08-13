@@ -378,7 +378,6 @@ fn parse_path_segments(path : String) -> Array[String] {
   let segments : Array[String] = []
   let start = if path.has_prefix("/") { 1 } else { 0 }
   let mut builder = StringBuilder::new()
-  
   for i = start; i < path.length(); i = i + 1 {
     let char_code = path[i]
     if char_code == Char::to_int('/') {

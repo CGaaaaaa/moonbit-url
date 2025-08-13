@@ -4630,3 +4630,106 @@ test "rfc3986_relative_reference_standard_tests" {
     }
   }
 }
+
+///| 百分号编码UTF-8转换测试
+test "percent_encoding_utf8_conversion" {
+  // 测试中文字符编码
+  let chinese_text = "测试"
+  let chinese_encoded = encode_query_param(chinese_text)
+  inspect(chinese_encoded, content="%E6%B5%8B%E8%AF%95")
+  
+  // 测试单个中文字符
+  let single_chinese = "中"
+  let single_encoded = encode_query_param(single_chinese)
+  inspect(single_encoded, content="%E4%B8%AD")
+  
+  // 测试中英文混合
+  let mixed_text = "hello世界test"
+  let mixed_encoded = encode_query_param(mixed_text)
+  inspect(mixed_encoded, content="hello%E4%B8%96%E7%95%8Ctest")
+  
+  // 测试常见中文词汇
+  let common_chinese = "你好世界"
+  let common_encoded = encode_query_param(common_chinese)
+  inspect(common_encoded, content="%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C")
+  
+  // 测试Unicode特殊字符
+  let emoji = "😀"
+  let emoji_encoded = encode_query_param(emoji)
+  inspect(emoji_encoded, content="%F0%9F%98%80")
+  
+  // 测试Unicode符号
+  let unicode_symbols = "★☆♠♣♥♦"
+  let symbols_encoded = encode_query_param(unicode_symbols)
+  inspect(symbols_encoded, content="%E2%98%85%E2%98%86%E2%99%A0%E2%99%A3%E2%99%A5%E2%99%A6")
+  
+  // 测试日文字符
+  let japanese = "こんにちは"
+  let japanese_encoded = encode_query_param(japanese)
+  inspect(japanese_encoded, content="%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF")
+  
+  // 测试韩文字符
+  let korean = "안녕하세요"
+  let korean_encoded = encode_query_param(korean)
+  inspect(korean_encoded, content="%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94")
+  
+  // 测试混合Unicode字符
+  let mixed_unicode = "Hello世界🌍안녕"
+  let mixed_unicode_encoded = encode_query_param(mixed_unicode)
+  inspect(mixed_unicode_encoded, content="Hello%E4%B8%96%E7%95%8C%F0%9F%8C%8D%EC%95%88%EB%85%95")
+  
+  // 测试Unicode数学符号
+  let math_symbols = "∑∆∇∀∃"
+  let math_encoded = encode_query_param(math_symbols)
+  inspect(math_encoded, content="%E2%88%91%E2%88%86%E2%88%87%E2%88%80%E2%88%83")
+  
+  // 测试Unicode箭头符号
+  let arrows = "←→↑↓⇒⇐"
+  let arrows_encoded = encode_query_param(arrows)
+  inspect(arrows_encoded, content="%E2%86%90%E2%86%92%E2%86%91%E2%86%93%E2%87%92%E2%87%90")
+}
+
+///| 百分号编码解码往返测试
+test "percent_encoding_decode_roundtrip" {
+  // 测试编码解码往返
+  let test_strings = [
+    "测试",
+    "中",
+    "hello世界test",
+    "你好世界",
+    "😀",
+    "★☆♠♣♥♦",
+    "こんにちは",
+    "안녕하세요",
+    "Hello世界🌍안녕",
+    "∑∆∇∀∃",
+    "←→↑↓⇒⇐"
+  ]
+  
+  for i = 0; i < test_strings.length(); i = i + 1 {
+    let original = test_strings[i]
+    let encoded = encode_query_param(original)
+    match percent_decode(encoded) {
+      Ok(decoded) => {
+        // 解码后应该与原始字符串相同
+        assert_eq(decoded, original)
+      }
+      Err(e) => fail("Decode failed for " + original + ": " + e)
+    }
+  }
+}
+
+///| ASCII字符编码测试
+test "ascii_characters_encoding" {
+  // 测试ASCII字符编码
+  let ascii_string = "Hello World 123 !@#$%^&*()"
+  let encoded = encode_query_param(ascii_string)
+  // 空格 -> +, 特殊字符 -> %HH
+  assert_eq(encoded, "Hello+World+123+%21%40%23%24%25%5E%26%2A%28%29")
+  
+  // 测试特殊字符编码
+  let special_chars = "hello world+test&value=data"
+  let special_encoded = encode_query_param(special_chars)
+  // 空格 -> +, 其他特殊字符 -> %HH
+  assert_eq(special_encoded, "hello+world%2Btest%26value%3Ddata")
+}

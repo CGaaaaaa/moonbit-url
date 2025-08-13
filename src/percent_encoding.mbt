@@ -19,7 +19,8 @@ pub fn EncodeSet::query() -> EncodeSet {
 ///| 百分号编码字符串（基于 UTF-8 字节视角按字节编码）
 pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
   let mut result = ""
-  for i = 0; i < input.length(); i = i + 1 {
+  let mut i = 0
+  while i < input.length() {
     let codepoint = input[i]
     if codepoint <= 0x7F {
       // ASCII 直接按单字节处理
@@ -29,13 +30,54 @@ pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
       } else {
         result = result + Char::to_string(Int::unsafe_to_char(byte))
       }
+      i = i + 1
+    } else if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < input.length() {
+        let low_surrogate = input[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let utf8_bytes = utf8_encode_codepoint(full_codepoint)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 2
+        } else {
+          // 无效的低代理项，使用替换字符
+          let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 1
+        }
+      } else {
+        // 不完整的代理项对，使用替换字符
+        let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+        for j = 0; j < utf8_bytes.length(); j = j + 1 {
+          let b = utf8_bytes[j]
+          result = result + "%" + byte_to_hex(b)
+        }
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项，使用替换字符
+      let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+      for j = 0; j < utf8_bytes.length(); j = j + 1 {
+        let b = utf8_bytes[j]
+        result = result + "%" + byte_to_hex(b)
+      }
+      i = i + 1
     } else {
-      // 非 ASCII：先转为 UTF-8 字节序列，再逐字节百分号编码
+      // 其他非 ASCII：先转为 UTF-8 字节序列，再逐字节百分号编码
       let utf8_bytes = utf8_encode_codepoint(codepoint)
       for j = 0; j < utf8_bytes.length(); j = j + 1 {
         let b = utf8_bytes[j]
         result = result + "%" + byte_to_hex(b)
       }
+      i = i + 1
     }
   }
   result
@@ -358,19 +400,73 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
 ///| 编码URL查询参数（application/x-www-form-urlencoded：空格->+，其他按%HH）
 pub fn encode_query_param(input : String) -> String {
   let mut result = ""
-  for i = 0; i < input.length(); i = i + 1 {
-    let byte = input[i]
-    if byte == Char::to_int(' ') {
+  let mut i = 0
+  while i < input.length() {
+    let codepoint = input[i]
+    if codepoint == Char::to_int(' ') {
       result = result + "+"
-    } else if byte == Char::to_int('+') ||
-      byte == Char::to_int('&') ||
-      byte == Char::to_int('=') ||
-      byte == Char::to_int('%') ||
-      byte < 32 ||
-      byte > 126 {
-      result = result + "%" + byte_to_hex(byte)
+      i = i + 1
+    } else if codepoint <= 0x7F {
+      // ASCII 字符直接处理
+      // 根据 application/x-www-form-urlencoded 规范，编码所有非字母数字字符
+      // 除了 unreserved 字符：ALPHA / DIGIT / "-" / "." / "_" / "~"
+      let is_alpha = (codepoint >= 65 && codepoint <= 90) || (codepoint >= 97 && codepoint <= 122)
+      let is_digit = codepoint >= 48 && codepoint <= 57
+      let is_unreserved = is_alpha || is_digit || codepoint == 45 || codepoint == 46 || codepoint == 95 || codepoint == 126
+      
+      if is_unreserved {
+        result = result + Char::to_string(Int::unsafe_to_char(codepoint))
+      } else {
+        result = result + "%" + byte_to_hex(codepoint)
+      }
+      i = i + 1
+    } else if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < input.length() {
+        let low_surrogate = input[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let utf8_bytes = utf8_encode_codepoint(full_codepoint)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 2
+        } else {
+          // 无效的低代理项，使用替换字符
+          let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 1
+        }
+      } else {
+        // 不完整的代理项对，使用替换字符
+        let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+        for j = 0; j < utf8_bytes.length(); j = j + 1 {
+          let b = utf8_bytes[j]
+          result = result + "%" + byte_to_hex(b)
+        }
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项，使用替换字符
+      let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+      for j = 0; j < utf8_bytes.length(); j = j + 1 {
+        let b = utf8_bytes[j]
+        result = result + "%" + byte_to_hex(b)
+      }
+      i = i + 1
     } else {
-      result = result + Char::to_string(Int::unsafe_to_char(byte))
+      // 其他非 ASCII：先转为 UTF-8 字节序列，再逐字节百分号编码
+      let utf8_bytes = utf8_encode_codepoint(codepoint)
+      for j = 0; j < utf8_bytes.length(); j = j + 1 {
+        let b = utf8_bytes[j]
+        result = result + "%" + byte_to_hex(b)
+      }
+      i = i + 1
     }
   }
   result
@@ -471,16 +567,58 @@ pub fn validate_and_decode_percent_encoded(
 /// 用于 IRI -> URI 转换场景，避免对 '/'、':' 等 ASCII 保留字符误编码。
 pub fn percent_encode_non_ascii(input : String) -> String {
   let mut result = ""
-  for i = 0; i < input.length(); i = i + 1 {
+  let mut i = 0
+  while i < input.length() {
     let codepoint = input[i]
     if codepoint <= 0x7F {
       result = result + Char::to_string(Int::unsafe_to_char(codepoint))
+      i = i + 1
+    } else if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < input.length() {
+        let low_surrogate = input[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          let utf8_bytes = utf8_encode_codepoint(full_codepoint)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 2
+        } else {
+          // 无效的低代理项，使用替换字符
+          let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+          for j = 0; j < utf8_bytes.length(); j = j + 1 {
+            let b = utf8_bytes[j]
+            result = result + "%" + byte_to_hex(b)
+          }
+          i = i + 1
+        }
+      } else {
+        // 不完整的代理项对，使用替换字符
+        let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+        for j = 0; j < utf8_bytes.length(); j = j + 1 {
+          let b = utf8_bytes[j]
+          result = result + "%" + byte_to_hex(b)
+        }
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项，使用替换字符
+      let utf8_bytes = utf8_encode_codepoint(0xFFFD)
+      for j = 0; j < utf8_bytes.length(); j = j + 1 {
+        let b = utf8_bytes[j]
+        result = result + "%" + byte_to_hex(b)
+      }
+      i = i + 1
     } else {
       let utf8_bytes = utf8_encode_codepoint(codepoint)
       for j = 0; j < utf8_bytes.length(); j = j + 1 {
         let b = utf8_bytes[j]
         result = result + "%" + byte_to_hex(b)
       }
+      i = i + 1
     }
   }
   result

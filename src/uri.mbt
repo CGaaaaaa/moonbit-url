@@ -1135,44 +1135,146 @@ fn validate_uts46_label(
 fn check_contexto_ok(label : String) -> Bool {
   let mut has_arabic_indic = false
   let mut has_ext_arabic_indic = false
-  for idx = 0; idx < label.length(); idx = idx + 1 {
-    let ch = Int::unsafe_to_char(label[idx])
-    let cp = Char::to_int(ch)
-    if cp == 0x00B7 { // MIDDLE DOT
-      let prev_ok = if idx > 0 {
-        Int::unsafe_to_char(label[idx - 1]) == 'l'
+  let mut i = 0
+  while i < label.length() {
+    let codepoint = label[i]
+    if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < label.length() {
+        let low_surrogate = label[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          if full_codepoint == 0x00B7 { // MIDDLE DOT
+            let prev_ok = if i > 0 {
+              let prev_codepoint = label[i - 1]
+              if prev_codepoint >= 0xD800 && prev_codepoint <= 0xDBFF {
+                if i > 1 {
+                  let prev_low = label[i - 2]
+                  if prev_low >= 0xDC00 && prev_low <= 0xDFFF {
+                    let prev_full = 0x10000 + ((prev_codepoint - 0xD800) << 10) + (prev_low - 0xDC00)
+                    prev_full == 0x006C // 'l'
+                  } else {
+                    false
+                  }
+                } else {
+                  false
+                }
+              } else {
+                prev_codepoint == 0x006C // 'l'
+              }
+            } else {
+              false
+            }
+            let next_ok = if i + 2 < label.length() {
+              let next_codepoint = label[i + 2]
+              if next_codepoint >= 0xD800 && next_codepoint <= 0xDBFF {
+                if i + 3 < label.length() {
+                  let next_low = label[i + 3]
+                  if next_low >= 0xDC00 && next_low <= 0xDFFF {
+                    let next_full = 0x10000 + ((next_codepoint - 0xD800) << 10) + (next_low - 0xDC00)
+                    next_full == 0x006C // 'l'
+                  } else {
+                    false
+                  }
+                } else {
+                  false
+                }
+              } else {
+                next_codepoint == 0x006C // 'l'
+              }
+            } else {
+              false
+            }
+            if !(prev_ok && next_ok) {
+              return false
+            }
+          }
+          if full_codepoint == 0x0375 { // GREEK LOWER NUMERAL SIGN (KERAIA)
+            let next_is_greek = if i + 2 < label.length() {
+              let next_codepoint = label[i + 2]
+              if next_codepoint >= 0xD800 && next_codepoint <= 0xDBFF {
+                if i + 3 < label.length() {
+                  let next_low = label[i + 3]
+                  if next_low >= 0xDC00 && next_low <= 0xDFFF {
+                    let next_full = 0x10000 + ((next_codepoint - 0xD800) << 10) + (next_low - 0xDC00)
+                    is_greek_letter(next_full)
+                  } else {
+                    false
+                  }
+                } else {
+                  false
+                }
+              } else {
+                is_greek_letter(next_codepoint)
+              }
+            } else {
+              false
+            }
+            if !next_is_greek {
+              return false
+            }
+          }
+          if full_codepoint == 0x30FB { // KATAKANA MIDDLE DOT
+            if !contains_kana(label) {
+              return false
+            }
+          }
+          if full_codepoint >= 0x0660 && full_codepoint <= 0x0669 {
+            has_arabic_indic = true
+          }
+          if full_codepoint >= 0x06F0 && full_codepoint <= 0x06F9 {
+            has_ext_arabic_indic = true
+          }
+          i = i + 2
+        } else {
+          i = i + 1
+        }
       } else {
-        false
+        i = i + 1
       }
-      let next_ok = if idx + 1 < label.length() {
-        Int::unsafe_to_char(label[idx + 1]) == 'l'
-      } else {
-        false
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项
+      i = i + 1
+    } else {
+      // 其他字符直接检查
+      if codepoint == 0x00B7 { // MIDDLE DOT
+        let prev_ok = if i > 0 {
+          label[i - 1] == 0x006C // 'l'
+        } else {
+          false
+        }
+        let next_ok = if i + 1 < label.length() {
+          label[i + 1] == 0x006C // 'l'
+        } else {
+          false
+        }
+        if !(prev_ok && next_ok) {
+          return false
+        }
       }
-      if !(prev_ok && next_ok) {
-        return false
+      if codepoint == 0x0375 { // GREEK LOWER NUMERAL SIGN (KERAIA)
+        let next_is_greek = if i + 1 < label.length() {
+          is_greek_letter(label[i + 1])
+        } else {
+          false
+        }
+        if !next_is_greek {
+          return false
+        }
       }
-    }
-    if cp == 0x0375 { // GREEK LOWER NUMERAL SIGN (KERAIA)
-      let next_is_greek = if idx + 1 < label.length() {
-        is_greek_letter(Char::to_int(Int::unsafe_to_char(label[idx + 1])))
-      } else {
-        false
+      if codepoint == 0x30FB { // KATAKANA MIDDLE DOT
+        if !contains_kana(label) {
+          return false
+        }
       }
-      if !next_is_greek {
-        return false
+      if codepoint >= 0x0660 && codepoint <= 0x0669 {
+        has_arabic_indic = true
       }
-    }
-    if cp == 0x30FB { // KATAKANA MIDDLE DOT
-      if !contains_kana(label) {
-        return false
+      if codepoint >= 0x06F0 && codepoint <= 0x06F9 {
+        has_ext_arabic_indic = true
       }
-    }
-    if cp >= 0x0660 && cp <= 0x0669 {
-      has_arabic_indic = true
-    }
-    if cp >= 0x06F0 && cp <= 0x06F9 {
-      has_ext_arabic_indic = true
+      i = i + 1
     }
   }
   if has_arabic_indic && has_ext_arabic_indic {
@@ -1188,10 +1290,35 @@ fn is_greek_letter(cp : Int) -> Bool {
 
 ///|
 fn contains_kana(s : String) -> Bool {
-  for i = 0; i < s.length(); i = i + 1 {
-    let cp = Char::to_int(Int::unsafe_to_char(s[i]))
-    if (cp >= 0x3040 && cp <= 0x309F) || (cp >= 0x30A0 && cp <= 0x30FF) {
-      return true
+  let mut i = 0
+  while i < s.length() {
+    let codepoint = s[i]
+    if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < s.length() {
+        let low_surrogate = s[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          if (full_codepoint >= 0x3040 && full_codepoint <= 0x309F) || (full_codepoint >= 0x30A0 && full_codepoint <= 0x30FF) {
+            return true
+          }
+          i = i + 2
+        } else {
+          i = i + 1
+        }
+      } else {
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项
+      i = i + 1
+    } else {
+      // 其他字符直接检查
+      if (codepoint >= 0x3040 && codepoint <= 0x309F) || (codepoint >= 0x30A0 && codepoint <= 0x30FF) {
+        return true
+      }
+      i = i + 1
     }
   }
   false
@@ -1233,10 +1360,35 @@ fn contains_ascii_ltr_letter(s : String) -> Bool {
 
 ///|
 fn contains_rtl_codepoint(s : String) -> Bool {
-  for i = 0; i < s.length(); i = i + 1 {
-    let cp = Char::to_int(Int::unsafe_to_char(s[i]))
-    if is_rtl_range(cp) {
-      return true
+  let mut i = 0
+  while i < s.length() {
+    let codepoint = s[i]
+    if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < s.length() {
+        let low_surrogate = s[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          if is_rtl_range(full_codepoint) {
+            return true
+          }
+          i = i + 2
+        } else {
+          i = i + 1
+        }
+      } else {
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项
+      i = i + 1
+    } else {
+      // 其他字符直接检查
+      if is_rtl_range(codepoint) {
+        return true
+      }
+      i = i + 1
     }
   }
   false
@@ -1247,8 +1399,27 @@ fn ends_with_rtl_codepoint(s : String) -> Bool {
   if s.length() == 0 {
     return false
   }
-  let last = Char::to_int(Int::unsafe_to_char(s[s.length() - 1]))
-  is_rtl_range(last)
+  let i = s.length() - 1
+  let codepoint = s[i]
+  if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+    // 低代理项：需要与前一个高代理项组合
+    if i > 0 {
+      let high_surrogate = s[i - 1]
+      if high_surrogate >= 0xD800 && high_surrogate <= 0xDBFF {
+        // 计算完整的Unicode码点
+        let full_codepoint = 0x10000 + ((high_surrogate - 0xD800) << 10) + (codepoint - 0xDC00)
+        return is_rtl_range(full_codepoint)
+      }
+    }
+    // 孤立的低代理项
+    return false
+  } else if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+    // 孤立的低代理项
+    return false
+  } else {
+    // 其他字符直接检查
+    return is_rtl_range(codepoint)
+  }
 }
 
 ///|
@@ -1499,20 +1670,77 @@ fn punycode_decode_strict(puny : String) -> String? {
   Some(codepoints_to_string(output))
 }
 
-///| 将字符串转为 Unicode 码点数组
+///| 将字符串转为 Unicode 码点数组（正确处理UTF-16代理项对）
 fn to_codepoints(s : String) -> Array[Int] {
   let cps : Array[Int] = []
-  for i = 0; i < s.length(); i = i + 1 {
-    cps.push(s[i])
+  let mut i = 0
+  while i < s.length() {
+    let codepoint = s[i]
+    if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < s.length() {
+        let low_surrogate = s[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          cps.push(full_codepoint)
+          i = i + 2
+        } else {
+          // 无效的低代理项，使用替换字符
+          cps.push(0xFFFD)
+          i = i + 1
+        }
+      } else {
+        // 不完整的代理项对，使用替换字符
+        cps.push(0xFFFD)
+        i = i + 1
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项，使用替换字符
+      cps.push(0xFFFD)
+      i = i + 1
+    } else {
+      // 其他字符直接添加
+      cps.push(codepoint)
+      i = i + 1
+    }
   }
   cps
 }
 
-///| 检查字符串是否包含非 ASCII 字符（基于字节 >= 128 的近似判断）
+///| 检查字符串是否包含非 ASCII 字符（正确处理UTF-16代理项对）
 fn contains_non_ascii(s : String) -> Bool {
-  for i = 0; i < s.length(); i = i + 1 {
-    if s[i] >= 128 {
+  let mut i = 0
+  while i < s.length() {
+    let codepoint = s[i]
+    if codepoint >= 0xD800 && codepoint <= 0xDBFF {
+      // 高代理项：需要与下一个低代理项组合
+      if i + 1 < s.length() {
+        let low_surrogate = s[i + 1]
+        if low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF {
+          // 计算完整的Unicode码点
+          let full_codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low_surrogate - 0xDC00)
+          if full_codepoint > 127 {
+            return true
+          }
+          i = i + 2
+        } else {
+          // 无效的低代理项，使用替换字符
+          return true
+        }
+      } else {
+        // 不完整的代理项对，使用替换字符
+        return true
+      }
+    } else if codepoint >= 0xDC00 && codepoint <= 0xDFFF {
+      // 孤立的低代理项，使用替换字符
       return true
+    } else {
+      // 其他字符直接检查
+      if codepoint > 127 {
+        return true
+      }
+      i = i + 1
     }
   }
   false

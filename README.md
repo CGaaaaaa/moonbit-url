@@ -36,6 +36,7 @@ A comprehensive and RFC 3986 compliant URI parsing and manipulation library for 
 - **Multiple Contexts**: Component, query, path segment, and userinfo encoding
 - **RFC Compliant**: Proper encoding/decoding according to RFC 3986
 - **UTF-8 Only**: All percent-decoding yields UTF-8; invalid UTF-8 is rejected
+- **UTF-16 Surrogate Pairs**: Proper handling of UTF-16 surrogate pairs with U+FFFD replacement for invalid pairs
 - **Custom Encode Sets**: Define custom character sets for encoding
 - **Validation**: Validate percent-encoded strings
 - **Form Encoding**: Support for application/x-www-form-urlencoded
@@ -562,10 +563,11 @@ The library includes a comprehensive test suite with **100% test success rate**,
 - Chinese/UTF-8 character encoding support
 
 ### Test Results
-- **Total tests**: 101 passed, 0 failed
+- **Total tests**: 104 passed, 0 failed
 - **RFC 3986 compliance**: Full standard reference resolution
 - **rust-url compatibility**: Edge case handling
 - **IPv6 support**: Comprehensive address validation
+- **UTF-16 surrogate pairs**: Proper handling and validation
 
 Run tests with:
 ```bash

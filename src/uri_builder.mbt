@@ -375,10 +375,8 @@ fn parse_path_segments(path : String) -> Array[String] {
   if path == "/" {
     return ["/"] // 使用特殊标记表示根路径
   }
-  
   let segments : Array[String] = []
   let start = if path.has_prefix("/") { 1 } else { 0 }
-  
   let mut builder = StringBuilder::new()
   
   for i = start; i < path.length(); i = i + 1 {
@@ -392,11 +390,9 @@ fn parse_path_segments(path : String) -> Array[String] {
       builder = builder.append(Char::to_string(Int::unsafe_to_char(char_code)))
     }
   }
-  
   if builder.length() > 0 {
     segments.push(builder.build())
   }
-  
   segments
 }
 

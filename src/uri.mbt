@@ -208,7 +208,7 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
   if is_empty(input) {
     return Err(ParseError("Empty URI"))
   }
-  
+
   // RFC 3986 推荐的解析顺序：先解析 scheme，再解析其他组件
   // 首先找到 scheme 分隔符
   match find_substring(input, ":") {
@@ -217,7 +217,6 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
       if not(is_valid_scheme(scheme)) {
         return Err(InvalidScheme("Invalid scheme: " + scheme))
       }
-      
       let mut remaining = input.substring(start=scheme_pos + 1)
       let mut authority : Authority? = None
       let mut path = ""
@@ -236,10 +235,8 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
             None => ()
           }
         }
-        
         let auth_str = remaining.substring(start=0, end=auth_end)
         remaining = remaining.substring(start=auth_end)
-        
         match parse_authority(auth_str) {
           Ok(auth) => {
             // 如果主机为空且scheme不是file，则视为错误
@@ -273,7 +270,6 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
 
       // 剩余部分就是 path
       path = remaining
-      
       Ok({ scheme, authority, path, query, fragment })
     }
     None => Err(ParseError("Invalid URI: missing scheme"))
@@ -374,28 +370,28 @@ fn is_valid_scheme(scheme : String) -> Bool {
   if is_empty(scheme) {
     return false
   }
-  
+
   // 检查长度限制（避免过长的scheme）
   if scheme.length() > 64 {
     return false
   }
-  
+
   // 第一个字符必须是字母
   let first = Int::unsafe_to_char(scheme[0])
   if not(is_alpha_char(first)) {
     return false
   }
-  
+
   // 检查后续字符
   for i = 1; i < scheme.length(); i = i + 1 {
     let c = Int::unsafe_to_char(scheme[i])
-    
+
     // 检查是否是有效字符（字母、数字、+、-、.）
     if not(is_alphanumeric_char(c) || c == '+' || c == '-' || c == '.') {
       return false
     }
   }
-  
+
   // 额外的语义检查：确保不是纯数字（避免与端口混淆）
   let mut all_digits = true
   for i = 0; i < scheme.length(); i = i + 1 {
@@ -407,7 +403,6 @@ fn is_valid_scheme(scheme : String) -> Bool {
   if all_digits {
     return false
   }
-  
   true
 }
 

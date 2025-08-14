@@ -5,33 +5,25 @@
 test "percent_decode_boundary_fix" {
   // 测试百分号解码的边界条件修复：确保字符串末尾的百分号编码被正确处理
   match Uri::parse("http://example.com/test%41") {
-    Ok(uri) => {
-      assert_eq(uri.path, "/test%41") // 路径中的%41应该被保留
-    }
+    Ok(uri) => assert_eq(uri.path, "/test%41") // 路径中的%41应该被保留
     Err(_) => fail("Should parse URI with percent encoding at string end")
   }
 
   // 测试更复杂的末尾百分号编码
   match Uri::parse("http://example.com/path?query=value%2B%3D") {
-    Ok(uri) => {
-      assert_eq(uri.query, Some("query=value%2B%3D"))
-    }
+    Ok(uri) => assert_eq(uri.query, Some("query=value%2B%3D"))
     Err(_) => fail("Should parse URI with percent encoding in query at end")
   }
 
   // 测试fragment中的末尾百分号编码
   match Uri::parse("http://example.com/path#fragment%20end") {
-    Ok(uri) => {
-      assert_eq(uri.fragment, Some("fragment%20end"))
-    }
+    Ok(uri) => assert_eq(uri.fragment, Some("fragment%20end"))
     Err(_) => fail("Should parse URI with percent encoding in fragment at end")
   }
 
   // 测试正好三个字符的百分号编码（之前的边界条件问题）
   match Uri::parse("scheme://host/path%20") {
-    Ok(uri) => {
-      assert_eq(uri.path, "/path%20")
-    }
+    Ok(uri) => assert_eq(uri.path, "/path%20")
     Err(_) => fail("Should parse URI with percent encoding exactly at end")
   }
 }
@@ -39,7 +31,10 @@ test "percent_decode_boundary_fix" {
 ///| 测试URI解析顺序修复
 test "parsing_order_fix" {
   // 测试包含特殊字符的复杂URI，确保解析顺序正确
-  match Uri::parse("custom://user:pass@host.example.com:8080/path/with/special?query=1&other=2#frag") {
+  match
+    Uri::parse(
+      "custom://user:pass@host.example.com:8080/path/with/special?query=1&other=2#frag",
+    ) {
     Ok(uri) => {
       assert_eq(uri.scheme, "custom")
       match uri.authority {
@@ -92,7 +87,7 @@ test "parsing_order_fix" {
       match uri.authority {
         Some(auth) => {
           assert_eq(auth.userinfo, Some("user"))
-          assert_eq(auth.host, "host") 
+          assert_eq(auth.host, "host")
           assert_eq(auth.port, Some(8080))
         }
         None => fail("Should have authority")
@@ -122,12 +117,10 @@ test "enhanced_scheme_validation" {
     Ok(uri) => assert_eq(uri.scheme, "http+ssh")
     Err(_) => fail("Should accept scheme with plus")
   }
-
   match Uri::parse("git-ssh://example.com") {
     Ok(uri) => assert_eq(uri.scheme, "git-ssh")
     Err(_) => fail("Should accept scheme with hyphen")
   }
-
   match Uri::parse("scheme.v2://example.com") {
     Ok(uri) => assert_eq(uri.scheme, "scheme.v2")
     Err(_) => fail("Should accept scheme with dot")

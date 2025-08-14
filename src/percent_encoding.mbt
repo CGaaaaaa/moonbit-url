@@ -137,15 +137,32 @@ fn should_percent_encode_byte(byte : Int, encode_set : EncodeSet) -> Bool {
   match encode_set {
     Component => true
     Query =>
-      // 对查询使用严格 percent（空格编码为%20）
-      // 需要编码的还包括保留分隔符 & = + % 等
-      byte == 32 ||
-      byte == 38 ||
-      byte == 61 ||
-      byte == 43 ||
-      byte == 37 ||
-      byte < 32 ||
-      byte > 126
+      // 对查询使用严格 percent 编码（空格编码为%20）
+      // 根据RFC 3986，编码所有非unreserved字符，除了query中允许的一些字符
+      // 但是为了安全性，仍然编码关键的分隔符 & = + % 和控制字符
+      byte == 32 ||  // space
+      byte == 34 ||  // "
+      byte == 35 ||  // #
+      byte == 37 ||  // %
+      byte == 38 ||  // &
+      byte == 43 ||  // +
+      byte == 44 ||  // ,
+      byte == 47 ||  // /
+      byte == 58 ||  // :
+      byte == 59 ||  // ;
+      byte == 60 ||  // <
+      byte == 61 ||  // =
+      byte == 62 ||  // >
+      byte == 63 ||  // ?
+      byte == 64 ||  // @
+      byte == 91 ||  // [
+      byte == 92 ||  // \
+      byte == 93 ||  // ]
+      byte == 123 || // {
+      byte == 124 || // |
+      byte == 125 || // }
+      byte < 32 ||   // control characters
+      byte > 126     // non-ASCII
   }
 }
 
@@ -287,7 +304,7 @@ pub fn percent_decode(input : String) -> Result[String, String] {
   let mut bytes = ""
   let mut i = 0
   while i < input.length() {
-    if i + 2 < input.length() && input[i] == Char::to_int('%') {
+    if i + 2 <= input.length() - 1 && input[i] == Char::to_int('%') {
       let hex1 = input[i + 1]
       let hex2 = input[i + 2]
       match

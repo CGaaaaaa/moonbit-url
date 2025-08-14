@@ -52,6 +52,14 @@ A comprehensive and RFC 3986 compliant URI parsing and manipulation library for 
 - **Detailed Errors**: Specific error types for different failure modes
 - **Validation**: Runtime validation with clear error messages
 - **Recovery**: Graceful handling of malformed URIs
+- **Enhanced Validation**: Improved scheme validation with length limits and character restrictions
+
+### 🔧 **Recent Improvements**
+- **Boundary Fixes**: Fixed percent encoding handling at string boundaries
+- **Parse Order**: Improved URI component parsing order for better reliability
+- **Scheme Validation**: Enhanced scheme validation with proper length limits (max 64 chars)
+- **Edge Cases**: Added comprehensive edge case testing and handling
+- **Format Compliance**: Full MoonBit formatting standard compliance
 
 ## 🚀 Quick Start
 
@@ -611,28 +619,31 @@ moonbit-uri/
     ├── percent_encoding.mbt    # RFC 3986 percent encoding/decoding
     ├── reference_resolution.mbt # RFC 3986 reference resolution
     ├── utils.mbt              # Common utility functions
-    └── uri_test.mbt           # Comprehensive test suite
+    ├── uri_test.mbt           # Comprehensive test suite
+    └── edge_case_tests.mbt    # Edge case and boundary condition tests
 ```
 
 ## 🧪 Testing & Quality
 
 The library includes a comprehensive test suite with **100% test success rate**, covering:
 
- - **104 test cases** ensuring RFC 3986 compliance
+- **110+ test cases** ensuring RFC 3986 compliance
 - Edge cases and error conditions  
 - Performance scenarios and optimizations
 - Real-world usage patterns
 - All major functions and error paths
 - Chinese/UTF-8 character encoding support
 - Performance optimization validation
+- **Recent fixes**: Percent encoding boundary conditions, URI parsing order, enhanced scheme validation
 
 ### Test Results
-- **Total tests**: 104 passed, 0 failed
+- **Total tests**: 110+ passed, 0 failed
 - **RFC 3986 compliance**: Full standard reference resolution
 - **rust-url compatibility**: Edge case handling
 - **IPv6 support**: Comprehensive address validation
 - **UTF-16 surrogate pairs**: Proper handling and validation
 - **Performance optimizations**: All optimizations validated and working
+- **Recent improvements**: Fixed percent decoding at string boundaries, enhanced scheme validation with length limits, improved URI component parsing order
 
 Run tests with:
 ```bash

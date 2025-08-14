@@ -208,50 +208,38 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
   if is_empty(input) {
     return Err(ParseError("Empty URI"))
   }
-  let mut remaining = input
-  let mut fragment : String? = None
-  let mut query : String? = None
-
-  // 提取 fragment (第一个 #)
-  match find_char(remaining, '#') {
-    Some(frag_pos) => {
-      fragment = Some(remaining.substring(start=frag_pos + 1))
-      remaining = remaining.substring(start=0, end=frag_pos)
-    }
-    None => ()
-  }
-
-  // 提取 query (第一个 ?)
-  match find_char(remaining, '?') {
-    Some(query_pos) => {
-      query = Some(remaining.substring(start=query_pos + 1))
-      remaining = remaining.substring(start=0, end=query_pos)
-    }
-    None => ()
-  }
-
-  // 提取 scheme
-  match find_substring(remaining, ":") {
+  
+  // RFC 3986 推荐的解析顺序：先解析 scheme，再解析其他组件
+  // 首先找到 scheme 分隔符
+  match find_substring(input, ":") {
     Some(scheme_pos) => {
-      let scheme = remaining.substring(start=0, end=scheme_pos)
+      let scheme = input.substring(start=0, end=scheme_pos)
       if not(is_valid_scheme(scheme)) {
         return Err(InvalidScheme("Invalid scheme: " + scheme))
       }
-      remaining = remaining.substring(start=scheme_pos + 1)
+      
+      let mut remaining = input.substring(start=scheme_pos + 1)
       let mut authority : Authority? = None
       let mut path = ""
+      let mut query : String? = None
+      let mut fragment : String? = None
 
-      // 检查 authority
+      // 检查是否有 authority（以 "//" 开头）
       if has_prefix(remaining, "//") {
         remaining = remaining.substring(start=2)
 
-        // 找到 authority 结束位置
-        let auth_end = match find_char(remaining, '/') {
-          Some(pos) => pos
-          None => remaining.length()
+        // 找到 authority 结束位置（由 path、query 或 fragment 标记）
+        let mut auth_end = remaining.length()
+        for delimiter in ['/', '?', '#'] {
+          match find_char(remaining, delimiter) {
+            Some(pos) => if pos < auth_end { auth_end = pos }
+            None => ()
+          }
         }
+        
         let auth_str = remaining.substring(start=0, end=auth_end)
         remaining = remaining.substring(start=auth_end)
+        
         match parse_authority(auth_str) {
           Ok(auth) => {
             // 如果主机为空且scheme不是file，则视为错误
@@ -263,7 +251,29 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
           Err(e) => return Err(e)
         }
       }
+
+      // 解析 path、query 和 fragment
+      // 先提取 fragment（最后的 #）
+      match find_char(remaining, '#') {
+        Some(frag_pos) => {
+          fragment = Some(remaining.substring(start=frag_pos + 1))
+          remaining = remaining.substring(start=0, end=frag_pos)
+        }
+        None => ()
+      }
+
+      // 然后提取 query（最后的 ?）
+      match find_char(remaining, '?') {
+        Some(query_pos) => {
+          query = Some(remaining.substring(start=query_pos + 1))
+          remaining = remaining.substring(start=0, end=query_pos)
+        }
+        None => ()
+      }
+
+      // 剩余部分就是 path
       path = remaining
+      
       Ok({ scheme, authority, path, query, fragment })
     }
     None => Err(ParseError("Invalid URI: missing scheme"))
@@ -355,20 +365,49 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
 }
 
 ///| 验证 scheme 是否有效
+/// 根据 RFC 3986，scheme 必须：
+/// - 以字母开头
+/// - 后续字符只能是字母、数字、'+'、'-'、'.'
+/// - 长度合理（实际限制建议不超过64字符）
+/// - 大小写不敏感（接受大写，但会标准化为小写）
 fn is_valid_scheme(scheme : String) -> Bool {
   if is_empty(scheme) {
     return false
   }
+  
+  // 检查长度限制（避免过长的scheme）
+  if scheme.length() > 64 {
+    return false
+  }
+  
+  // 第一个字符必须是字母
   let first = Int::unsafe_to_char(scheme[0])
   if not(is_alpha_char(first)) {
     return false
   }
+  
+  // 检查后续字符
   for i = 1; i < scheme.length(); i = i + 1 {
     let c = Int::unsafe_to_char(scheme[i])
+    
+    // 检查是否是有效字符（字母、数字、+、-、.）
     if not(is_alphanumeric_char(c) || c == '+' || c == '-' || c == '.') {
       return false
     }
   }
+  
+  // 额外的语义检查：确保不是纯数字（避免与端口混淆）
+  let mut all_digits = true
+  for i = 0; i < scheme.length(); i = i + 1 {
+    let c = Int::unsafe_to_char(scheme[i])
+    if not(c >= '0' && c <= '9') {
+      all_digits = false
+    }
+  }
+  if all_digits {
+    return false
+  }
+  
   true
 }
 
@@ -1774,7 +1813,7 @@ fn normalize_percent_encoding_in_string(
   let mut out = ""
   let mut i = 0
   while i < input.length() {
-    if i + 2 < input.length() && input[i] == Char::to_int('%') {
+    if i + 2 <= input.length() - 1 && input[i] == Char::to_int('%') {
       let h1 = Int::unsafe_to_char(input[i + 1])
       let h2 = Int::unsafe_to_char(input[i + 2])
       match (hex_char_to_int(h1), hex_char_to_int(h2)) {

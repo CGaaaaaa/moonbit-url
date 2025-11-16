@@ -205,7 +205,7 @@ test "convenience_constructors" {
       assert_eq(uri.scheme, "http")
       assert_eq(uri.path, "/api/v1")
     }
-    Err(_) => abort("HTTP convenience constructor should work")
+    Err(_) => fail("HTTP convenience constructor should work")
   }
 
   // File URI
@@ -215,7 +215,7 @@ test "convenience_constructors" {
       assert_eq(uri.scheme, "file")
       assert_eq(uri.path, "/home/user/document.pdf")
     }
-    Err(_) => abort("File URI constructor should work")
+    Err(_) => fail("File URI constructor should work")
   }
 }
 
@@ -236,11 +236,11 @@ test "percent_encoding_basic" {
   // 解码测试
   match percent_decode("hello%20world") {
     Ok(decoded) => assert_eq(decoded, "hello world")
-    Err(_) => abort("Should decode percent encoded string")
+    Err(_) => fail("Should decode percent encoded string")
   }
   match decode_query_param("hello+world%26test") {
     Ok(decoded) => assert_eq(decoded, "hello world&test")
-    Err(_) => abort("Should decode query parameter")
+    Err(_) => fail("Should decode query parameter")
   }
 }
 
@@ -254,7 +254,7 @@ test "percent_encoding_chinese_support" {
   // 测试解码
   match percent_decode(encoded) {
     Ok(decoded) => assert_eq(decoded, simple_text)
-    Err(_) => abort("Should decode basic characters")
+    Err(_) => fail("Should decode basic characters")
   }
 
   // 测试查询参数中的特殊字符
@@ -263,7 +263,7 @@ test "percent_encoding_chinese_support" {
   assert_eq(encoded_query, "key%3Dvalue")
   match decode_query_param(encoded_query) {
     Ok(decoded) => assert_eq(decoded, query_text)
-    Err(_) => abort("Should decode query params")
+    Err(_) => fail("Should decode query params")
   }
 }
 
@@ -275,7 +275,7 @@ test "percent_encoding_advanced_utf8" {
   assert_eq(encoded, "hello%20world")
   match percent_decode(encoded) {
     Ok(decoded) => assert_eq(decoded, text_with_special)
-    Err(_) => abort("Should handle basic encoding/decoding")
+    Err(_) => fail("Should handle basic encoding/decoding")
   }
 
   // 测试查询参数特殊字符
@@ -289,16 +289,16 @@ test "percent_encoding_validation" {
   // 测试有效的百分号编码
   match validate_percent_encoded("hello%20world%E4%B8%AD%E6%96%87") {
     Ok(_) => () // 预期成功
-    Err(_) => abort("Valid percent encoding should pass validation")
+    Err(_) => fail("Valid percent encoding should pass validation")
   }
 
   // 测试无效的百分号编码
   match validate_percent_encoded("hello%2") {
-    Ok(_) => abort("Incomplete percent encoding should fail")
+    Ok(_) => fail("Incomplete percent encoding should fail")
     Err(_) => () // 预期失败
   }
   match validate_percent_encoded("hello%ZZ") {
-    Ok(_) => abort("Invalid hex digits should fail")
+    Ok(_) => fail("Invalid hex digits should fail")
     Err(_) => () // 预期失败
   }
 }
@@ -323,7 +323,7 @@ test "ipv6_support_comprehensive" {
         assert_eq(host.has_suffix("]"), true)
       }
       Err(e) =>
-        abort(
+        fail(
           "IPv6 address should be supported: " + uri_str + ": " + e.to_string(),
         )
     }
@@ -339,7 +339,7 @@ test "ipv6_support_comprehensive" {
   ]
   for invalid_uri in invalid_ipv6_uris {
     match Uri::parse(invalid_uri) {
-      Ok(_) => abort("Invalid IPv6 address should fail: " + invalid_uri)
+      Ok(_) => fail("Invalid IPv6 address should fail: " + invalid_uri)
       Err(_) => () // 预期失败
     }
   }
@@ -353,7 +353,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(uri.host(), Some("[fe80::1%25en0]"))
       assert_eq(uri.port(), Some(8080))
     }
-    Err(e) => abort("Should parse IPv6 with zone-id: " + e.to_string())
+    Err(e) => fail("Should parse IPv6 with zone-id: " + e.to_string())
   }
 
   // host 小写化（域名）但 path 保留大小写
@@ -368,7 +368,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(normalized.path(), "/Path/With/Case")
     }
     Err(e) =>
-      abort("Should lowercase host but keep path case: " + e.to_string())
+      fail("Should lowercase host but keep path case: " + e.to_string())
   }
 
   // 测试 normalize_with: 折叠重复斜杠
@@ -382,7 +382,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(without_fold.path(), "//a///b////c")
     }
     Err(e) =>
-      abort("Should parse path with duplicate slashes: " + e.to_string())
+      fail("Should parse path with duplicate slashes: " + e.to_string())
   }
 
   // 测试 normalize_with: IDNA 选项对 ASCII punycode 标签仅小写保留
@@ -392,7 +392,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       let with_idna = uri.normalize_with(opts)
       assert_eq(with_idna.host(), Some("xn--example-ova.com"))
     }
-    Err(e) => abort("Should parse punycode-like hostname: " + e.to_string())
+    Err(e) => fail("Should parse punycode-like hostname: " + e.to_string())
   }
 
   // 百分号编码规范化：大写与解码 unreserved
@@ -407,7 +407,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(normalized.query().unwrap(), "x=~-_")
       assert_eq(normalized.fragment().unwrap(), "frag%2F~")
     }
-    Err(e) => abort("Should normalize percent-encoding: " + e.to_string())
+    Err(e) => fail("Should normalize percent-encoding: " + e.to_string())
   }
 
   // UTS-46 非过渡：保留 ß -> xn-- form
@@ -421,7 +421,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       let uni = domain_to_unicode("xn--fa-hia.de")
       assert_eq(uni, "faß.de")
     }
-    Err(e) => abort("Should parse faß.de: " + e.to_string())
+    Err(e) => fail("Should parse faß.de: " + e.to_string())
   }
 
   // UTS-46 过渡：ß -> ss
@@ -432,7 +432,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       )
       assert_eq(with_idna.host(), Some("fass.de"))
     }
-    Err(e) => abort("Should parse faß.de transitional: " + e.to_string())
+    Err(e) => fail("Should parse faß.de transitional: " + e.to_string())
   }
 
   // 点映射（U+3002）
@@ -443,7 +443,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       )
       assert_eq(with_idna.host(), Some("www.example.com"))
     }
-    Err(e) => abort("Should map ideographic full stop: " + e.to_string())
+    Err(e) => fail("Should map ideographic full stop: " + e.to_string())
   }
 
   // 严格 ContextO：中点必须在 l·l 中
@@ -459,7 +459,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       let strict_ascii = domain_to_ascii_strict("l\u00B7a.example")
       assert_eq(strict_ascii, None)
     }
-    Err(e) => abort("Should parse label with middle dot: " + e.to_string())
+    Err(e) => fail("Should parse label with middle dot: " + e.to_string())
   }
 
   // 严格：禁止混用两套阿拉伯-印度数字
@@ -470,7 +470,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       )
       assert_eq(strict_ascii, None)
     }
-    Err(e) => abort("Should parse arabic-indic mixing: " + e.to_string())
+    Err(e) => fail("Should parse arabic-indic mixing: " + e.to_string())
   }
 }
 
@@ -491,7 +491,7 @@ test "reference_resolution_basic" {
       assert_eq(resolved.scheme, "http")
       assert_eq(resolved.path, "/dir/page2.html")
     }
-    Err(_) => abort("Should resolve relative reference")
+    Err(_) => fail("Should resolve relative reference")
   }
 
   // 绝对路径引用
@@ -504,7 +504,7 @@ test "reference_resolution_basic" {
   }
   match resolve_reference(base, relative2) {
     Ok(resolved) => assert_eq(resolved.path, "/absolute/path.html")
-    Err(_) => abort("Should resolve absolute path reference")
+    Err(_) => fail("Should resolve absolute path reference")
   }
 }
 
@@ -516,7 +516,7 @@ test "reference_resolution_absolute" {
   // 绝对引用应该直接返回
   match resolve_reference(base, absolute) {
     Ok(resolved) => assert_eq(resolved.to_string(), "https://example.com/path")
-    Err(_) => abort("Should return absolute reference as-is")
+    Err(_) => fail("Should return absolute reference as-is")
   }
 }
 
@@ -537,7 +537,7 @@ test "reference_resolver" {
       assert_eq(resolved.scheme, "https")
       assert_eq(resolved.path.contains("posts/456"), true)
     }
-    Err(_) => abort("Should resolve relative reference")
+    Err(_) => fail("Should resolve relative reference")
   }
 }
 
@@ -545,25 +545,25 @@ test "reference_resolver" {
 test "error_handling_comprehensive" {
   // 无效scheme
   match Uri::parse("123://example.com") {
-    Ok(_) => abort("Scheme starting with digit should be invalid")
+    Ok(_) => fail("Scheme starting with digit should be invalid")
     Err(_) => ()
   }
 
   // 无效端口
   match Uri::parse("http://example.com:99999") {
-    Ok(_) => abort("Port > 65535 should fail")
+    Ok(_) => fail("Port > 65535 should fail")
     Err(_) => ()
   }
 
   // 空URI
   match Uri::parse("") {
-    Ok(_) => abort("Empty URI should fail")
+    Ok(_) => fail("Empty URI should fail")
     Err(_) => ()
   }
 
   // 构建器错误：缺少scheme
   match UriBuilder::new().host("example.com").build() {
-    Ok(_) => abort("Should fail without scheme")
+    Ok(_) => fail("Should fail without scheme")
     Err(_) => ()
   }
 }
@@ -582,7 +582,7 @@ test "complex_scenarios" {
       assert_eq(complex_uri.filename(), Some("comments"))
       assert_eq(complex_uri.parent_path(), "/v1/users/123/posts/456")
     }
-    Err(_) => abort("Should parse complex URI")
+    Err(_) => fail("Should parse complex URI")
   }
 }
 
@@ -609,7 +609,7 @@ test "edge_cases_and_coverage" {
       assert_eq(uri.filename(), None)
       assert_eq(uri.file_extension(), None)
     }
-    Err(_) => abort("Should parse URI with empty path")
+    Err(_) => fail("Should parse URI with empty path")
   }
 
   // 测试只有根路径
@@ -618,23 +618,23 @@ test "edge_cases_and_coverage" {
       assert_eq(uri.path(), "/")
       assert_eq(uri.parent_path(), "/")
     }
-    Err(_) => abort("Should parse URI with root path")
+    Err(_) => fail("Should parse URI with root path")
   }
 
   // 测试百分号解码（我们的实现可能不检查无效编码）
   match percent_decode("hello%20world") {
     Ok(decoded) => assert_eq(decoded, "hello world")
-    Err(_) => abort("Should decode valid percent encoding")
+    Err(_) => fail("Should decode valid percent encoding")
   }
 
   // 测试边界端口号
   match Uri::parse("http://example.com:0") {
     Ok(uri) => assert_eq(uri.port(), Some(0))
-    Err(_) => abort("Port 0 should be valid")
+    Err(_) => fail("Port 0 should be valid")
   }
   match Uri::parse("http://example.com:65535") {
     Ok(uri) => assert_eq(uri.port(), Some(65535))
-    Err(_) => abort("Port 65535 should be valid")
+    Err(_) => fail("Port 65535 should be valid")
   }
 
   // 测试相对URI与绝对URI的区别
@@ -656,19 +656,19 @@ test "error_edge_cases" {
 
   // 无效字符在scheme中
   match Uri::parse("ht@tp://example.com") {
-    Ok(_) => abort("Invalid scheme character should fail")
+    Ok(_) => fail("Invalid scheme character should fail")
     Err(_) => ()
   }
 
   // 空scheme
   match Uri::parse("://example.com") {
-    Ok(_) => abort("Empty scheme should fail")
+    Ok(_) => fail("Empty scheme should fail")
     Err(_) => ()
   }
 
   // 无效端口范围
   match Uri::parse("http://example.com:99999") {
-    Ok(_) => abort("Port > 65535 should fail")
+    Ok(_) => fail("Port > 65535 should fail")
     Err(_) => ()
   }
 
@@ -696,7 +696,7 @@ test "reference_resolution_advanced" {
       assert_eq(resolved.scheme(), "http")
       assert_eq(resolved.path().contains("other.html"), true)
     }
-    Err(_) => abort("Should resolve dot reference")
+    Err(_) => fail("Should resolve dot reference")
   }
 
   // 测试查询和片段的保留
@@ -712,7 +712,7 @@ test "reference_resolution_advanced" {
       assert_eq(resolved.query(), Some("param=value"))
       assert_eq(resolved.fragment(), Some("section"))
     }
-    Err(_) => abort("Should preserve query and fragment")
+    Err(_) => fail("Should preserve query and fragment")
   }
 }
 
@@ -753,24 +753,24 @@ test "join_uri_functionality" {
       assert_eq(joined.contains("http://example.com"), true)
       assert_eq(joined.contains("users/123"), true)
     }
-    Err(_) => abort("Should join URIs successfully")
+    Err(_) => fail("Should join URIs successfully")
   }
 
   // 测试绝对引用
   match join_uri("http://example.com/api", "https://other.com/data") {
     Ok(joined) => assert_eq(joined, "https://other.com/data")
-    Err(_) => abort("Should return absolute reference as-is")
+    Err(_) => fail("Should return absolute reference as-is")
   }
 
   // 测试无效基URI
   match join_uri("invalid-uri", "path") {
-    Ok(_) => abort("Should fail with invalid base URI")
+    Ok(_) => fail("Should fail with invalid base URI")
     Err(_) => () // 预期错误
   }
 
   // 测试无效引用
   match join_uri("http://example.com", "://invalid") {
-    Ok(_) => abort("Should fail with invalid reference")
+    Ok(_) => fail("Should fail with invalid reference")
     Err(_) => () // 预期错误
   }
 }
@@ -841,7 +841,7 @@ test "reference_resolver_functionality" {
           assert_eq(resolved.scheme(), "http")
           assert_eq(resolved.path().contains("users/123"), true)
         }
-        Err(_) => abort("Should resolve relative reference")
+        Err(_) => fail("Should resolve relative reference")
       }
 
       // 测试绝对引用
@@ -850,21 +850,21 @@ test "reference_resolver_functionality" {
           assert_eq(resolved.scheme(), "https")
           assert_eq(resolved.host(), Some("other.com"))
         }
-        Err(_) => abort("Should resolve absolute reference")
+        Err(_) => fail("Should resolve absolute reference")
       }
 
       // 测试无效引用
       match resolver.resolve("://invalid") {
-        Ok(_) => abort("Should fail with invalid reference")
+        Ok(_) => fail("Should fail with invalid reference")
         Err(_) => () // 预期错误
       }
     }
-    Err(_) => abort("Should create resolver with absolute base")
+    Err(_) => fail("Should create resolver with absolute base")
   }
 
   // 无效的基URI（相对）
   match ReferenceResolver::new(relative_base) {
-    Ok(_) => abort("Should fail with relative base URI")
+    Ok(_) => fail("Should fail with relative base URI")
     Err(_) => () // 预期错误
   }
 }
@@ -888,7 +888,7 @@ test "reference_resolver_batch_functionality" {
           assert_eq(uri.scheme(), "http")
           assert_eq(uri.path().contains("users/123"), true)
         }
-        Err(_) => abort("First reference should resolve successfully")
+        Err(_) => fail("First reference should resolve successfully")
       }
 
       // 检查第二个成功的引用
@@ -897,7 +897,7 @@ test "reference_resolver_batch_functionality" {
           assert_eq(uri.scheme(), "http")
           assert_eq(uri.path().contains("posts/456"), true)
         }
-        Err(_) => abort("Second reference should resolve successfully")
+        Err(_) => fail("Second reference should resolve successfully")
       }
 
       // 检查绝对引用
@@ -906,16 +906,16 @@ test "reference_resolver_batch_functionality" {
           assert_eq(uri.scheme(), "https")
           assert_eq(uri.host(), Some("other.com"))
         }
-        Err(_) => abort("Absolute reference should resolve successfully")
+        Err(_) => fail("Absolute reference should resolve successfully")
       }
 
       // 检查无效引用（应该失败）
       match results[3] {
-        Ok(_) => abort("Invalid reference should fail")
+        Ok(_) => fail("Invalid reference should fail")
         Err(_) => () // 预期错误
       }
     }
-    Err(_) => abort("Should create resolver")
+    Err(_) => fail("Should create resolver")
   }
 }
 
@@ -937,7 +937,7 @@ test "reference_resolution_error_cases" {
     fragment: None,
   }
   match resolve_reference(relative_base, reference) {
-    Ok(_) => abort("Should fail with relative base URI")
+    Ok(_) => fail("Should fail with relative base URI")
     Err(_) => () // 预期的RelativeReferenceError
   }
 }
@@ -965,24 +965,24 @@ test "join_uri_comprehensive" {
       assert_eq(result.contains("example.com"), true)
       assert_eq(result.contains("relative"), true)
     }
-    Err(_) => abort("Should join successfully")
+    Err(_) => fail("Should join successfully")
   }
 
   // 测试绝对引用
   match join_uri("http://example.com/path", "https://other.com/other") {
     Ok(result) => assert_eq(result, "https://other.com/other")
-    Err(_) => abort("Should use absolute reference")
+    Err(_) => fail("Should use absolute reference")
   }
 
   // 测试无效基URI
   match join_uri("invalid:::uri", "relative") {
-    Ok(_) => abort("Should fail with invalid base URI")
+    Ok(_) => fail("Should fail with invalid base URI")
     Err(_) => () // 预期错误
   }
 
   // 测试无效引用
   match join_uri("http://example.com", "invalid:::reference") {
-    Ok(_) => abort("Should fail with invalid reference")
+    Ok(_) => fail("Should fail with invalid reference")
     Err(_) => () // 预期错误
   }
 }
@@ -1089,16 +1089,16 @@ test "reference_resolver_edge_cases" {
           assert_eq(uri.scheme(), "http")
           assert_eq(uri.host(), Some("example.com"))
         }
-        Err(_) => abort("Valid relative reference should succeed")
+        Err(_) => fail("Valid relative reference should succeed")
       }
 
       // 检查第二个结果（绝对URI应该成功）
       match mixed_results[1] {
         Ok(uri) => assert_eq(uri.host(), Some("absolute.com"))
-        Err(_) => abort("Absolute URI should succeed")
+        Err(_) => fail("Absolute URI should succeed")
       }
     }
-    Err(_) => abort("Should create resolver with absolute base")
+    Err(_) => fail("Should create resolver with absolute base")
   }
 }
 
@@ -1113,7 +1113,7 @@ test "reference_resolver_with_relative_base" {
     fragment: None,
   }
   match ReferenceResolver::new(relative_base) {
-    Ok(_) => abort("Should fail with relative base URI")
+    Ok(_) => fail("Should fail with relative base URI")
     Err(_) => () // 预期的RelativeReferenceError
   }
 }
@@ -1123,49 +1123,49 @@ test "percent_decoding_comprehensive" {
   // 基础解码测试
   match percent_decode("hello%20world") {
     Ok(decoded) => assert_eq(decoded, "hello world")
-    Err(_) => abort("Should decode %20 successfully")
+    Err(_) => fail("Should decode %20 successfully")
   }
 
   // 多个%20
   match percent_decode("hello%20%20world") {
     Ok(decoded) => assert_eq(decoded, "hello  world")
-    Err(_) => abort("Should decode multiple %20")
+    Err(_) => fail("Should decode multiple %20")
   }
 
   // 空字符串
   match percent_decode("") {
     Ok(decoded) => assert_eq(decoded, "")
-    Err(_) => abort("Should handle empty string")
+    Err(_) => fail("Should handle empty string")
   }
 
   // 无编码的字符串
   match percent_decode("helloworld") {
     Ok(decoded) => assert_eq(decoded, "helloworld")
-    Err(_) => abort("Should handle non-encoded string")
+    Err(_) => fail("Should handle non-encoded string")
   }
 
   // 混合编码和非编码
   match percent_decode("hello%20world123") {
     Ok(decoded) => assert_eq(decoded, "hello world123")
-    Err(_) => abort("Should handle mixed content")
+    Err(_) => fail("Should handle mixed content")
   }
 
   // 边界情况：%20在开头
   match percent_decode("%20hello") {
     Ok(decoded) => assert_eq(decoded, " hello")
-    Err(_) => abort("Should handle %20 at start")
+    Err(_) => fail("Should handle %20 at start")
   }
 
   // 边界情况：%20在结尾
   match percent_decode("hello%20") {
     Ok(decoded) => assert_eq(decoded, "hello ")
-    Err(_) => abort("Should handle %20 at end")
+    Err(_) => fail("Should handle %20 at end")
   }
 
   // 测试不完整的百分号编码（应该不被处理）
   match percent_decode("hello%2") {
     Ok(decoded) => assert_eq(decoded, "hello%2") // 简化版不处理不完整的编码
-    Err(_) => abort("Should handle incomplete encoding")
+    Err(_) => fail("Should handle incomplete encoding")
   }
 }
 
@@ -1208,37 +1208,37 @@ test "query_param_decoding_comprehensive" {
   // 基础查询参数解码
   match decode_query_param("hello+world") {
     Ok(decoded) => assert_eq(decoded, "hello world")
-    Err(_) => abort("Should decode + to space")
+    Err(_) => fail("Should decode + to space")
   }
 
   // %2B解码为+
   match decode_query_param("hello%2Bworld") {
     Ok(decoded) => assert_eq(decoded, "hello+world")
-    Err(_) => abort("Should decode %2B to +")
+    Err(_) => fail("Should decode %2B to +")
   }
 
   // %26解码为&
   match decode_query_param("hello%26world") {
     Ok(decoded) => assert_eq(decoded, "hello&world")
-    Err(_) => abort("Should decode %26 to &")
+    Err(_) => fail("Should decode %26 to &")
   }
 
   // %3D解码为=
   match decode_query_param("hello%3Dworld") {
     Ok(decoded) => assert_eq(decoded, "hello=world")
-    Err(_) => abort("Should decode %3D to =")
+    Err(_) => fail("Should decode %3D to =")
   }
 
   // 空字符串
   match decode_query_param("") {
     Ok(decoded) => assert_eq(decoded, "")
-    Err(_) => abort("Should handle empty string")
+    Err(_) => fail("Should handle empty string")
   }
 
   // 无编码字符串
   match decode_query_param("helloworld") {
     Ok(decoded) => assert_eq(decoded, "helloworld")
-    Err(_) => abort("Should handle non-encoded string")
+    Err(_) => fail("Should handle non-encoded string")
   }
 
   // 复杂混合解码
@@ -1249,7 +1249,7 @@ test "query_param_decoding_comprehensive" {
       assert_eq(decoded.contains("&"), true) // 应该包含&（从%26解码）
       assert_eq(decoded.contains("="), true) // 应该包含=（从%3D解码）
     }
-    Err(_) => abort("Should decode complex query param")
+    Err(_) => fail("Should decode complex query param")
   }
 
   // 测试无效编码（简化版可能不验证）
@@ -1293,18 +1293,18 @@ test "uri_advanced_parsing_edge_cases" {
   // 测试scheme边界情况
   match Uri::parse("a://example.com") {
     Ok(uri) => assert_eq(uri.scheme(), "a")
-    Err(_) => abort("Single letter scheme should be valid")
+    Err(_) => fail("Single letter scheme should be valid")
   }
 
   // 测试无效scheme（以数字开头）
   match Uri::parse("9scheme://example.com") {
-    Ok(_) => abort("Scheme starting with digit should be invalid")
+    Ok(_) => fail("Scheme starting with digit should be invalid")
     Err(_) => () // 预期错误
   }
 
   // 测试scheme包含无效字符
   match Uri::parse("http@://example.com") {
-    Ok(_) => abort("Scheme with @ should be invalid")
+    Ok(_) => fail("Scheme with @ should be invalid")
     Err(_) => () // 预期错误
   }
 
@@ -1318,18 +1318,18 @@ test "uri_advanced_parsing_edge_cases" {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.path().length() > 50, true)
     }
-    Err(_) => abort("Long URI should be parseable")
+    Err(_) => fail("Long URI should be parseable")
   }
 
   // 测试port边界值的验证
   match Uri::parse("http://example.com:999999") {
-    Ok(_) => abort("Port > 65535 should be invalid")
+    Ok(_) => fail("Port > 65535 should be invalid")
     Err(_) => () // 预期错误
   }
 
   // 测试负端口号
   match Uri::parse("http://example.com:-1") {
-    Ok(_) => abort("Negative port should be invalid")
+    Ok(_) => fail("Negative port should be invalid")
     Err(_) => () // 预期错误
   }
 }
@@ -1340,13 +1340,13 @@ test "uri_authority_edge_cases" {
 
   // 空主机名
   match Uri::parse("http://:8080/path") {
-    Ok(_) => abort("Empty host should be invalid")
+    Ok(_) => fail("Empty host should be invalid")
     Err(_) => () // 预期错误
   }
 
   // 只有用户信息没有主机
   match Uri::parse("http://user@/path") {
-    Ok(_) => abort("Missing host after userinfo should be invalid")
+    Ok(_) => fail("Missing host after userinfo should be invalid")
     Err(_) => () // 预期错误
   }
 
@@ -1360,12 +1360,12 @@ test "uri_authority_edge_cases" {
         Some(auth) =>
           match auth.userinfo {
             Some(userinfo) => assert_eq(userinfo.contains("complex"), true)
-            None => abort("Should have userinfo")
+            None => fail("Should have userinfo")
           }
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
     }
-    Err(_) => abort("Complex userinfo should be valid")
+    Err(_) => fail("Complex userinfo should be valid")
   }
 
   // 测试IPv6格式
@@ -1379,10 +1379,10 @@ test "uri_authority_edge_cases" {
           assert_eq(auth.host, "[::1]")
           assert_eq(auth.host.contains("::1"), true)
         }
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
     }
-    Err(_) => abort("Should support IPv6 addresses")
+    Err(_) => fail("Should support IPv6 addresses")
   }
 }
 
@@ -1393,13 +1393,13 @@ test "uri_query_fragment_edge_cases" {
   // 空查询参数
   match Uri::parse("http://example.com/path?") {
     Ok(uri) => assert_eq(uri.query(), Some(""))
-    Err(_) => abort("Empty query should be valid")
+    Err(_) => fail("Empty query should be valid")
   }
 
   // 空片段
   match Uri::parse("http://example.com/path#") {
     Ok(uri) => assert_eq(uri.fragment(), Some(""))
-    Err(_) => abort("Empty fragment should be valid")
+    Err(_) => fail("Empty fragment should be valid")
   }
 
   // 查询参数中包含特殊字符
@@ -1410,13 +1410,13 @@ test "uri_query_fragment_edge_cases" {
       let query = uri.query().unwrap()
       assert_eq(query.contains("value%20with%20spaces"), true)
     }
-    Err(_) => abort("Encoded query params should be valid")
+    Err(_) => fail("Encoded query params should be valid")
   }
 
   // 片段中包含特殊字符
   match Uri::parse("http://example.com/path#section%20name") {
     Ok(uri) => assert_eq(uri.fragment(), Some("section%20name"))
-    Err(_) => abort("Encoded fragment should be valid")
+    Err(_) => fail("Encoded fragment should be valid")
   }
 
   // 多个?号的处理
@@ -1426,7 +1426,7 @@ test "uri_query_fragment_edge_cases" {
       let query = uri.query().unwrap()
       assert_eq(query.contains("?"), true)
     }
-    Err(_) => abort("Multiple ? should be handled")
+    Err(_) => fail("Multiple ? should be handled")
   }
 
   // 多个#号的处理
@@ -1436,7 +1436,7 @@ test "uri_query_fragment_edge_cases" {
       let fragment = uri.fragment().unwrap()
       assert_eq(fragment.contains("#"), true)
     }
-    Err(_) => abort("Multiple # should be handled")
+    Err(_) => fail("Multiple # should be handled")
   }
 }
 
@@ -1458,13 +1458,13 @@ test "uri_path_normalization_edge_cases" {
       // 规范化应该处理前导的../
       assert_eq(normalized.path().length() >= 0, true)
     }
-    Err(_) => abort("Leading ../ should be parseable")
+    Err(_) => fail("Leading ../ should be parseable")
   }
 
   // 空路径段
   match Uri::parse("http://example.com//double//slash") {
     Ok(uri) => assert_eq(uri.path(), "//double//slash")
-    Err(_) => abort("Double slashes should be preserved")
+    Err(_) => fail("Double slashes should be preserved")
   }
 
   // 非常深层的路径
@@ -1477,7 +1477,7 @@ test "uri_path_normalization_edge_cases" {
       assert_eq(uri.filename(), Some("z"))
       assert_eq(uri.file_extension(), None)
     }
-    Err(_) => abort("Deep path should be valid")
+    Err(_) => fail("Deep path should be valid")
   }
 }
 
@@ -1515,35 +1515,35 @@ test "uri_error_types_coverage" {
 
   // InvalidScheme
   match Uri::parse("://example.com") {
-    Ok(_) => abort("Empty scheme should fail")
+    Ok(_) => fail("Empty scheme should fail")
     Err(error) =>
       // 应该是InvalidScheme错误
       match error {
         InvalidScheme(_) => ()
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 
   // InvalidPort  
   match Uri::parse("http://example.com:abc") {
-    Ok(_) => abort("Non-numeric port should fail")
+    Ok(_) => fail("Non-numeric port should fail")
     Err(error) =>
       // 应该是InvalidPort错误
       match error {
         InvalidPort(_) => ()
-        _ => abort("Should be InvalidPort error")
+        _ => fail("Should be InvalidPort error")
       }
   }
 
   // ParseError
   match Uri::parse("not a valid uri at all") {
-    Ok(_) => abort("Invalid URI format should fail")
+    Ok(_) => fail("Invalid URI format should fail")
     Err(error) =>
       // 应该是某种解析错误
       match error {
         ParseError(_) => ()
         InvalidScheme(_) => () // 也可能是scheme错误
-        _ => abort("Should be a parsing error")
+        _ => fail("Should be a parsing error")
       }
   }
 }
@@ -1604,7 +1604,7 @@ test "uri_convenience_constructors_edge_cases" {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.host(), Some("sub.domain-with-hyphens.com"))
     }
-    Err(_) => abort("Valid hostname with hyphens should work")
+    Err(_) => fail("Valid hostname with hyphens should work")
   }
 
   // 空路径的文件URI
@@ -1636,7 +1636,7 @@ test "uri_convenience_constructors_edge_cases" {
       assert_eq(uri.scheme(), "mailto")
       assert_eq(uri.path().contains("user@example.com"), true)
     }
-    Err(_) => abort("Mailto with query-like content should work")
+    Err(_) => fail("Mailto with query-like content should work")
   }
 }
 
@@ -1704,7 +1704,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.host(), Some("other.com"))
       assert_eq(resolved.path(), "/path")
     }
-    Err(_) => abort("Absolute reference should resolve directly")
+    Err(_) => fail("Absolute reference should resolve directly")
   }
 
   // 相对路径引用 - 不以/开头
@@ -1721,7 +1721,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.host(), Some("a"))
       assert_eq(resolved.path().contains("g"), true)
     }
-    Err(_) => abort("Relative path should resolve")
+    Err(_) => fail("Relative path should resolve")
   }
 
   // 绝对路径引用 - 以/开头
@@ -1738,7 +1738,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.host(), Some("a"))
       assert_eq(resolved.path(), "/absolute/path")
     }
-    Err(_) => abort("Absolute path should resolve")
+    Err(_) => fail("Absolute path should resolve")
   }
 
   // 带查询参数的引用
@@ -1754,7 +1754,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.query(), Some("param=value"))
       assert_eq(resolved.path().contains("page.html"), true)
     }
-    Err(_) => abort("Reference with query should resolve")
+    Err(_) => fail("Reference with query should resolve")
   }
 
   // 带片段的引用
@@ -1770,7 +1770,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.fragment(), Some("section1"))
       assert_eq(resolved.path().contains("doc.html"), true)
     }
-    Err(_) => abort("Reference with fragment should resolve")
+    Err(_) => fail("Reference with fragment should resolve")
   }
 
   // 空路径引用
@@ -1786,7 +1786,7 @@ test "resolve_reference_all_scenarios" {
       assert_eq(resolved.query(), Some("newquery"))
       assert_eq(resolved.fragment(), Some("newfrag"))
     }
-    Err(_) => abort("Empty path reference should resolve")
+    Err(_) => fail("Empty path reference should resolve")
   }
 }
 
@@ -1810,11 +1810,11 @@ test "resolve_reference_error_conditions" {
     fragment: None,
   }
   match resolve_reference(relative_base, reference) {
-    Ok(_) => abort("Should fail with relative base URI")
+    Ok(_) => fail("Should fail with relative base URI")
     Err(error) =>
       match error {
         RelativeReferenceError(_) => () // 预期的错误类型
-        _ => abort("Should be RelativeReferenceError")
+        _ => fail("Should be RelativeReferenceError")
       }
   }
 
@@ -1827,7 +1827,7 @@ test "resolve_reference_error_conditions" {
     fragment: None,
   }
   match resolve_reference(another_relative, reference) {
-    Ok(_) => abort("Should fail with empty relative base")
+    Ok(_) => fail("Should fail with empty relative base")
     Err(_) => () // 预期错误
   }
 }
@@ -1842,24 +1842,24 @@ test "join_uri_comprehensive_testing" {
       assert_eq(result.contains("http://example.com"), true)
       assert_eq(result.contains("file.html"), true)
     }
-    Err(_) => abort("Normal join should succeed")
+    Err(_) => fail("Normal join should succeed")
   }
 
   // 绝对引用连接
   match join_uri("http://base.com/path", "https://other.com/resource") {
     Ok(result) => assert_eq(result, "https://other.com/resource")
-    Err(_) => abort("Absolute reference join should return absolute URI")
+    Err(_) => fail("Absolute reference join should return absolute URI")
   }
 
   // 空引用连接
   match join_uri("http://example.com/base", "") {
     Ok(result) => assert_eq(result.contains("http://example.com"), true)
-    Err(_) => abort("Empty reference should be handled")
+    Err(_) => fail("Empty reference should be handled")
   }
 
   // 无效基URI - 包含三冒号
   match join_uri("http:::invalid", "path") {
-    Ok(_) => abort("Should fail with invalid base URI containing :::")
+    Ok(_) => fail("Should fail with invalid base URI containing :::")
     Err(error) =>
       match error {
         ParseError(_) => () // 预期错误
@@ -1869,7 +1869,7 @@ test "join_uri_comprehensive_testing" {
 
   // 无效引用 - 包含三冒号
   match join_uri("http://example.com", "ref:::invalid") {
-    Ok(_) => abort("Should fail with invalid reference containing :::")
+    Ok(_) => fail("Should fail with invalid reference containing :::")
     Err(error) =>
       match error {
         ParseError(_) => () // 预期错误
@@ -1880,19 +1880,19 @@ test "join_uri_comprehensive_testing" {
   // 相对引用与不同的基路径
   match join_uri("http://example.com/dir/subdir/file.html", "../other.html") {
     Ok(result) => assert_eq(result.contains("other.html"), true)
-    Err(_) => abort("Relative path with .. should work")
+    Err(_) => fail("Relative path with .. should work")
   }
 
   // 带查询参数的基URI
   match join_uri("http://example.com/path?base=param", "relative") {
     Ok(result) => assert_eq(result.contains("relative"), true)
-    Err(_) => abort("Base URI with query should work")
+    Err(_) => fail("Base URI with query should work")
   }
 
   // 带片段的基URI
   match join_uri("http://example.com/path#fragment", "relative") {
     Ok(result) => assert_eq(result.contains("relative"), true)
-    Err(_) => abort("Base URI with fragment should work")
+    Err(_) => fail("Base URI with fragment should work")
   }
 }
 
@@ -2022,7 +2022,7 @@ test "reference_resolver_constructor_validation" {
     Ok(resolver) =>
       // 构造成功，测试基本功能
       assert_eq(resolver.base.scheme(), "http")
-    Err(_) => abort("Valid absolute URI should create resolver")
+    Err(_) => fail("Valid absolute URI should create resolver")
   }
 
   // 相对URI应该失败
@@ -2034,11 +2034,11 @@ test "reference_resolver_constructor_validation" {
     fragment: None,
   }
   match ReferenceResolver::new(relative_base) {
-    Ok(_) => abort("Relative base URI should fail")
+    Ok(_) => fail("Relative base URI should fail")
     Err(error) =>
       match error {
         RelativeReferenceError(_) => () // 预期错误
-        _ => abort("Should be RelativeReferenceError")
+        _ => fail("Should be RelativeReferenceError")
       }
   }
 
@@ -2051,7 +2051,7 @@ test "reference_resolver_constructor_validation" {
     fragment: None,
   }
   match ReferenceResolver::new(no_scheme) {
-    Ok(_) => abort("URI without scheme should fail")
+    Ok(_) => fail("URI without scheme should fail")
     Err(_) => () // 预期错误
   }
 
@@ -2097,7 +2097,7 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.host(), Some("other.com"))
       assert_eq(resolved.path(), "/resource")
     }
-    Err(_) => abort("Absolute URI should resolve")
+    Err(_) => fail("Absolute URI should resolve")
   }
 
   // 相对路径引用
@@ -2107,7 +2107,7 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.host(), Some("example.com"))
       assert_eq(resolved.path().contains("page.html"), true)
     }
-    Err(_) => abort("Relative path should resolve")
+    Err(_) => fail("Relative path should resolve")
   }
 
   // 绝对路径引用
@@ -2117,7 +2117,7 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.host(), Some("example.com"))
       assert_eq(resolved.path(), "/absolute/path")
     }
-    Err(_) => abort("Absolute path should resolve")
+    Err(_) => fail("Absolute path should resolve")
   }
 
   // 包含点段的路径
@@ -2127,7 +2127,7 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.host(), Some("example.com"))
       assert_eq(resolved.path().contains("parent.html"), true)
     }
-    Err(_) => abort("Path with .. should resolve")
+    Err(_) => fail("Path with .. should resolve")
   }
 
   // 包含./的路径
@@ -2137,12 +2137,12 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.host(), Some("example.com"))
       assert_eq(resolved.path().contains("current.html"), true)
     }
-    Err(_) => abort("Path with ./ should resolve")
+    Err(_) => fail("Path with ./ should resolve")
   }
 
   // 无效引用格式
   match resolver.resolve("invalid:::reference") {
-    Ok(_) => abort("Invalid reference should fail")
+    Ok(_) => fail("Invalid reference should fail")
     Err(error) =>
       match error {
         ParseError(_) => () // 预期错误
@@ -2156,7 +2156,7 @@ test "reference_resolver_single_resolution" {
       assert_eq(resolved.scheme(), "http")
       assert_eq(resolved.path().contains("final.html"), true)
     }
-    Err(_) => abort("Complex relative path should resolve")
+    Err(_) => fail("Complex relative path should resolve")
   }
 }
 
@@ -2181,7 +2181,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.path().contains("users/123"), true)
     }
-    Err(_) => abort("Single reference should resolve")
+    Err(_) => fail("Single reference should resolve")
   }
 
   // 混合类型的引用
@@ -2203,7 +2203,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
       assert_eq(uri.host(), Some("api.example.com"))
       assert_eq(uri.path().contains("users/123"), true)
     }
-    Err(_) => abort("Relative path should resolve")
+    Err(_) => fail("Relative path should resolve")
   }
 
   // 检查第二个结果（绝对路径）
@@ -2213,7 +2213,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
       assert_eq(uri.host(), Some("api.example.com"))
       assert_eq(uri.path(), "/api/v2/posts")
     }
-    Err(_) => abort("Absolute path should resolve")
+    Err(_) => fail("Absolute path should resolve")
   }
 
   // 检查第三个结果（绝对URI）
@@ -2223,7 +2223,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
       assert_eq(uri.host(), Some("other.com"))
       assert_eq(uri.path(), "/external")
     }
-    Err(_) => abort("Absolute URI should resolve")
+    Err(_) => fail("Absolute URI should resolve")
   }
 
   // 检查第四个结果（带点段）
@@ -2233,7 +2233,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
       assert_eq(uri.host(), Some("api.example.com"))
       assert_eq(uri.path().contains("resource"), true)
     }
-    Err(_) => abort("Path with .. should resolve")
+    Err(_) => fail("Path with .. should resolve")
   }
 
   // 检查第五个结果（空引用）
@@ -2247,7 +2247,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
 
   // 检查第六个结果（无效引用）
   match mixed_results[5] {
-    Ok(_) => abort("Invalid reference should fail")
+    Ok(_) => fail("Invalid reference should fail")
     Err(_) => () // 预期错误
   }
 
@@ -2266,7 +2266,7 @@ test "reference_resolver_batch_resolution_comprehensive" {
         assert_eq(uri.scheme(), "https")
         assert_eq(uri.host(), Some("api.example.com"))
       }
-      Err(_) => abort("All simple references should resolve")
+      Err(_) => fail("All simple references should resolve")
     }
   }
 }
@@ -2280,7 +2280,7 @@ test "reference_resolution_base_path_variations" {
   let root_resolver = ReferenceResolver::new(root_base).unwrap()
   match root_resolver.resolve("file.html") {
     Ok(resolved) => assert_eq(resolved.path().contains("file.html"), true)
-    Err(_) => abort("Root base should resolve relative path")
+    Err(_) => fail("Root base should resolve relative path")
   }
 
   // 深层路径基URI
@@ -2292,7 +2292,7 @@ test "reference_resolution_base_path_variations" {
       // 应该在同一目录下
       assert_eq(resolved.path().contains("/a/b/c/d/"), true)
     }
-    Err(_) => abort("Deep base should resolve relative path")
+    Err(_) => fail("Deep base should resolve relative path")
   }
 
   // 无路径基URI
@@ -2304,7 +2304,7 @@ test "reference_resolution_base_path_variations" {
       assert_eq(resolved.host(), Some("example.com"))
       assert_eq(resolved.path().contains("file.html"), true)
     }
-    Err(_) => abort("No-path base should resolve relative path")
+    Err(_) => fail("No-path base should resolve relative path")
   }
 
   // 带查询参数的基URI
@@ -2317,7 +2317,7 @@ test "reference_resolution_base_path_variations" {
       // 基URI的查询参数不应该被继承到解析的引用中
       assert_eq(resolved.path().contains("other"), true)
     }
-    Err(_) => abort("Query base should resolve relative path")
+    Err(_) => fail("Query base should resolve relative path")
   }
 
   // 带片段的基URI
@@ -2330,7 +2330,7 @@ test "reference_resolution_base_path_variations" {
       // 基URI的片段不应该被继承
       assert_eq(resolved.path().contains("other"), true)
     }
-    Err(_) => abort("Fragment base should resolve relative path")
+    Err(_) => fail("Fragment base should resolve relative path")
   }
 }
 
@@ -2350,7 +2350,7 @@ test "uri_parsing_comprehensive_edge_cases" {
       assert_eq(uri.authority, None)
       assert_eq(uri.path(), "")
     }
-    Err(_) => abort("Minimal valid URI should parse")
+    Err(_) => fail("Minimal valid URI should parse")
   }
 
   // 测试只有scheme和path的URI
@@ -2360,7 +2360,7 @@ test "uri_parsing_comprehensive_edge_cases" {
       assert_eq(uri.path().contains("text/plain"), true)
       assert_eq(uri.authority, None)
     }
-    Err(_) => abort("Data URI should parse")
+    Err(_) => fail("Data URI should parse")
   }
 
   // 测试复杂的userinfo
@@ -2376,10 +2376,10 @@ test "uri_parsing_comprehensive_edge_cases" {
           assert_eq(userinfo.contains("user"), true)
           assert_eq(userinfo.contains("complex"), true)
         }
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
     }
-    Err(_) => abort("Complex userinfo should parse")
+    Err(_) => fail("Complex userinfo should parse")
   }
 
   // 测试无端口的authority
@@ -2390,7 +2390,7 @@ test "uri_parsing_comprehensive_edge_cases" {
       assert_eq(uri.port(), None)
       assert_eq(uri.effective_port(), Some(80))
     }
-    Err(_) => abort("URI without explicit port should parse")
+    Err(_) => fail("URI without explicit port should parse")
   }
 
   // 测试特殊端口
@@ -2399,19 +2399,19 @@ test "uri_parsing_comprehensive_edge_cases" {
       assert_eq(uri.port(), Some(8080))
       assert_eq(uri.effective_port(), Some(8080))
     }
-    Err(_) => abort("URI with custom port should parse")
+    Err(_) => fail("URI with custom port should parse")
   }
 
   // 测试空查询
   match Uri::parse("http://example.com/path?") {
     Ok(uri) => assert_eq(uri.query(), Some(""))
-    Err(_) => abort("URI with empty query should parse")
+    Err(_) => fail("URI with empty query should parse")
   }
 
   // 测试空片段
   match Uri::parse("http://example.com/path#") {
     Ok(uri) => assert_eq(uri.fragment(), Some(""))
-    Err(_) => abort("URI with empty fragment should parse")
+    Err(_) => fail("URI with empty fragment should parse")
   }
 
   // 测试路径中的特殊字符
@@ -2420,7 +2420,7 @@ test "uri_parsing_comprehensive_edge_cases" {
       assert_eq(uri.path().contains("path"), true)
       assert_eq(uri.path().contains("%20"), true)
     }
-    Err(_) => abort("URI with encoded path should parse")
+    Err(_) => fail("URI with encoded path should parse")
   }
 }
 
@@ -2532,7 +2532,7 @@ test "rust_url_edge_cases" {
           assert_eq(auth.host, "test")
           assert_eq(auth.port, None)
         }
-        None => abort("应该有authority部分")
+        None => fail("应该有authority部分")
       }
     }
     Err(e) => println("解析 non-special://:@test/x 失败: " + e.to_string())
@@ -2646,7 +2646,7 @@ test "percent_encoding_comprehensive_edge_cases" {
   // 测试空字符串解码
   match percent_decode("") {
     Ok(decoded) => assert_eq(decoded, "")
-    Err(_) => abort("Empty string decode should work")
+    Err(_) => fail("Empty string decode should work")
   }
 
   // 测试单字符编码
@@ -2671,29 +2671,29 @@ test "percent_encoding_comprehensive_edge_cases" {
   // 测试解码边界情况
   match percent_decode("%20") {
     Ok(decoded) => assert_eq(decoded, " ")
-    Err(_) => abort("Basic percent decode should work")
+    Err(_) => fail("Basic percent decode should work")
   }
   match percent_decode("%2B") {
     Ok(decoded) => assert_eq(decoded.contains("2B") || decoded == "+", true)
-    Err(_) => abort("Plus decode should work")
+    Err(_) => fail("Plus decode should work")
   }
   match percent_decode("%26") {
     Ok(decoded) => assert_eq(decoded.contains("26") || decoded == "&", true)
-    Err(_) => abort("Ampersand decode should work")
+    Err(_) => fail("Ampersand decode should work")
   }
   match percent_decode("%3D") {
     Ok(decoded) => assert_eq(decoded.contains("3D") || decoded == "=", true)
-    Err(_) => abort("Equals decode should work")
+    Err(_) => fail("Equals decode should work")
   }
 
   // 测试查询参数特殊解码
   match decode_query_param("+") {
     Ok(decoded) => assert_eq(decoded, " ")
-    Err(_) => abort("Plus to space decode should work")
+    Err(_) => fail("Plus to space decode should work")
   }
   match decode_query_param("%2B") {
     Ok(decoded) => assert_eq(decoded, "+")
-    Err(_) => abort("Encoded plus decode should work")
+    Err(_) => fail("Encoded plus decode should work")
   }
 
   // 测试复杂混合解码
@@ -2704,7 +2704,7 @@ test "percent_encoding_comprehensive_edge_cases" {
       assert_eq(decoded.contains("&data"), true) // %26解码为&
       assert_eq(decoded.contains("=value"), true) // %3D解码为=
     }
-    Err(_) => abort("Complex mixed decode should work")
+    Err(_) => fail("Complex mixed decode should work")
   }
 
   // 测试不完整编码处理
@@ -2734,7 +2734,7 @@ test "percent_encoding_comprehensive_edge_cases" {
       assert_eq(long_decoded.contains("very long string"), true)
       assert_eq(long_decoded.contains("special characters"), true)
     }
-    Err(_) => abort("Long string round-trip should work")
+    Err(_) => fail("Long string round-trip should work")
   }
 }
 
@@ -2936,7 +2936,7 @@ test "rust_url_compatibility_cases" {
           assert_eq(auth.host, "test") // host部分
           assert_eq(auth.port, None) // 无端口
         }
-        None => abort("Should have authority for this URI")
+        None => fail("Should have authority for this URI")
       }
       assert_eq(uri.path(), "/x")
     }
@@ -2997,7 +2997,7 @@ test "rfc3986_relative_reference_standard_tests" {
     match join_uri(base_uri, relative_ref) {
       Ok(result) => assert_eq(result, expected)
       Err(e) =>
-        abort(
+        fail(
           "Case " + (i + 1).to_string() + " failed to resolve: " + e.to_string(),
         )
     }

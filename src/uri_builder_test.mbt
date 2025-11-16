@@ -19,7 +19,7 @@ test "advanced_builder_features" {
       assert_eq(uri.scheme, "https")
       assert_eq(uri.path, "/users/123/posts")
     }
-    Err(_) => abort("Advanced builder should work")
+    Err(_) => fail("Advanced builder should work")
   }
 }
 
@@ -38,7 +38,7 @@ test "builder_with_credentials" {
         uri.to_string(),
         "https://user:pass@secure.example.com:8443/secure/api",
       )
-    Err(_) => abort("Credentials builder should work")
+    Err(_) => fail("Credentials builder should work")
   }
 }
 
@@ -58,7 +58,7 @@ test "ipv6_uri_builder_support" {
       assert_eq(uri.port(), Some(443))
       assert_eq(uri.path(), "/api")
     }
-    Err(_) => abort("Should build IPv6 URI")
+    Err(_) => fail("Should build IPv6 URI")
   }
 
   // 测试不带方括号的IPv6地址（应该会出错或自动添加）
@@ -84,14 +84,14 @@ test "builder_operations" {
   match builder2.build_string() {
     Ok(uri_str) =>
       assert_eq(uri_str, "https://example.com/api/v1/users/123/posts")
-    Err(_) => abort("Path segments should work")
+    Err(_) => fail("Path segments should work")
   }
 
   // 清除路径
   let builder3 = builder.clone().clear_path().path_segment("different")
   match builder3.build_string() {
     Ok(uri_str) => assert_eq(uri_str, "https://example.com/different")
-    Err(_) => abort("Clear path should work")
+    Err(_) => fail("Clear path should work")
   }
 }
 
@@ -111,7 +111,7 @@ test "builder_comprehensive_coverage" {
       assert_eq(uri.host(), Some("api.example.com"))
       assert_eq(uri.path(), "/search")
     }
-    Err(_) => abort("Simple builder should work")
+    Err(_) => fail("Simple builder should work")
   }
 
   // 测试查询参数构建
@@ -125,7 +125,7 @@ test "builder_comprehensive_coverage" {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.query() is Some(_), true)
     }
-    Err(_) => abort("Builder with query params should work")
+    Err(_) => fail("Builder with query params should work")
   }
 }
 
@@ -155,7 +155,7 @@ test "resolve_reference_with_query_and_fragment" {
       assert_eq(resolved.fragment(), Some("ref-frag")) // 应该使用引用的fragment
       assert_eq(resolved.path().contains("relative.html"), true)
     }
-    Err(_) => abort("Should resolve reference with query and fragment")
+    Err(_) => fail("Should resolve reference with query and fragment")
   }
 }
 
@@ -170,7 +170,7 @@ test "uri_builder_advanced_methods" {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.host(), Some("example.com"))
     }
-    Err(_) => abort("Should build with default options")
+    Err(_) => fail("Should build with default options")
   }
 
   // 测试 userinfo 设置
@@ -181,7 +181,7 @@ test "uri_builder_advanced_methods" {
   match userinfo_builder.build() {
     Ok(uri) =>
       assert_eq(uri.to_string(), "https://user:pass@secure.example.com")
-    Err(_) => abort("Should build with userinfo")
+    Err(_) => fail("Should build with userinfo")
   }
 
   // 测试多个路径段
@@ -192,7 +192,7 @@ test "uri_builder_advanced_methods" {
     .path_segments(segments)
   match segments_builder.build() {
     Ok(uri) => assert_eq(uri.path(), "/api/v2/users/456")
-    Err(_) => abort("Should build with path segments")
+    Err(_) => fail("Should build with path segments")
   }
 }
 
@@ -225,7 +225,7 @@ test "uri_builder_query_operations" {
       assert_eq(query.contains("active"), true)
       assert_eq(query.contains("inactive"), false)
     }
-    Err(_) => abort("Should build with query params")
+    Err(_) => fail("Should build with query params")
   }
 
   // 测试 remove_query_param
@@ -236,14 +236,14 @@ test "uri_builder_query_operations" {
       assert_eq(query.contains("key1=value1"), true)
       assert_eq(query.contains("key2=value2"), false)
     }
-    Err(_) => abort("Should build after removing query param")
+    Err(_) => fail("Should build after removing query param")
   }
 
   // 测试 clear_query_params
   let cleared_builder = builder.clear_query_params()
   match cleared_builder.build() {
     Ok(uri) => assert_eq(uri.query(), None)
-    Err(_) => abort("Should build with cleared query params")
+    Err(_) => fail("Should build with cleared query params")
   }
 }
 
@@ -265,10 +265,10 @@ test "uri_builder_query_params" {
           assert_eq(query.contains("test"), true)
           assert_eq(query.contains("other"), true)
         }
-        None => abort("Should have query parameters")
+        None => fail("Should have query parameters")
       }
     }
-    Err(_) => abort("Query param builder should work")
+    Err(_) => fail("Query param builder should work")
   }
 }
 
@@ -288,7 +288,7 @@ test "uri_builder_from_existing" {
       assert_eq(reconstructed.query() is Some(_), true)
       assert_eq(reconstructed.fragment(), Some("results"))
     }
-    Err(_) => abort("Should reconstruct URI from existing")
+    Err(_) => fail("Should reconstruct URI from existing")
   }
 
   // 测试从字符串创建构建器
@@ -300,14 +300,14 @@ test "uri_builder_from_existing" {
           assert_eq(uri.host(), Some("example.com"))
           assert_eq(uri.path(), "/api")
         }
-        Err(_) => abort("Should build from string builder")
+        Err(_) => fail("Should build from string builder")
       }
-    Err(_) => abort("Should create builder from string")
+    Err(_) => fail("Should create builder from string")
   }
 
   // 测试无效字符串
   match UriBuilder::from_string("invalid-uri-format") {
-    Ok(_) => abort("Should fail with invalid URI string")
+    Ok(_) => fail("Should fail with invalid URI string")
     Err(_) => () // 预期错误
   }
 }
@@ -323,7 +323,7 @@ test "uri_builder_convenience_constructors" {
       assert_eq(uri.host(), Some("example.com"))
       assert_eq(uri.path(), "/api/v1")
     }
-    Err(_) => abort("HTTP convenience constructor should work")
+    Err(_) => fail("HTTP convenience constructor should work")
   }
 
   // HTTPS URL
@@ -333,7 +333,7 @@ test "uri_builder_convenience_constructors" {
       assert_eq(uri.host(), Some("secure.example.com"))
       assert_eq(uri.path(), "/secure")
     }
-    Err(_) => abort("HTTPS convenience constructor should work")
+    Err(_) => fail("HTTPS convenience constructor should work")
   }
 
   // FTP URL
@@ -348,7 +348,7 @@ test "uri_builder_convenience_constructors" {
       assert_eq(uri.host(), Some("ftp.example.com"))
       assert_eq(uri.path(), "/files")
     }
-    Err(_) => abort("FTP convenience constructor should work")
+    Err(_) => fail("FTP convenience constructor should work")
   }
 
   // File URI
@@ -358,7 +358,7 @@ test "uri_builder_convenience_constructors" {
       assert_eq(uri.scheme(), "file")
       assert_eq(uri.path(), "/home/user/document.pdf")
     }
-    Err(_) => abort("File URI constructor should work")
+    Err(_) => fail("File URI constructor should work")
   }
 
   // Mailto URI
@@ -367,7 +367,7 @@ test "uri_builder_convenience_constructors" {
       assert_eq(uri.scheme(), "mailto")
       assert_eq(uri.path(), "user@example.com")
     }
-    Err(_) => abort("Mailto URI constructor should work")
+    Err(_) => fail("Mailto URI constructor should work")
   }
 }
 
@@ -382,7 +382,7 @@ test "uri_builder_edge_cases" {
     .path("")
   match empty_path_builder.build() {
     Ok(uri) => assert_eq(uri.path(), "")
-    Err(_) => abort("Should handle empty path")
+    Err(_) => fail("Should handle empty path")
   }
 
   // 只有根路径
@@ -392,7 +392,7 @@ test "uri_builder_edge_cases" {
     .path("/")
   match root_path_builder.build() {
     Ok(uri) => assert_eq(uri.path(), "/")
-    Err(_) => abort("Should handle root path")
+    Err(_) => fail("Should handle root path")
   }
 
   // 端口边界值
@@ -402,7 +402,7 @@ test "uri_builder_edge_cases" {
     .port(0)
   match port_0_builder.build() {
     Ok(uri) => assert_eq(uri.port(), Some(0))
-    Err(_) => abort("Should handle port 0")
+    Err(_) => fail("Should handle port 0")
   }
   let port_max_builder = UriBuilder::new()
     .scheme("https")
@@ -410,7 +410,7 @@ test "uri_builder_edge_cases" {
     .port(65535)
   match port_max_builder.build() {
     Ok(uri) => assert_eq(uri.port(), Some(65535))
-    Err(_) => abort("Should handle port 65535")
+    Err(_) => fail("Should handle port 65535")
   }
 
   // 缺少host的scheme（如file协议）
@@ -423,7 +423,7 @@ test "uri_builder_edge_cases" {
       assert_eq(uri.path(), "/home/user/file.txt")
       assert_eq(uri.host(), None)
     }
-    Err(_) => abort("Should handle URI without host")
+    Err(_) => fail("Should handle URI without host")
   }
 }
 
@@ -454,7 +454,7 @@ test "uri_builder_exception_scenarios" {
   // 测试空scheme
   let empty_scheme_builder = UriBuilder::new().scheme("").host("example.com")
   match empty_scheme_builder.build() {
-    Ok(_) => abort("Empty scheme should fail")
+    Ok(_) => fail("Empty scheme should fail")
     Err(_) => () // 预期失败
   }
 
@@ -495,21 +495,21 @@ test "uri_builder_query_param_edge_cases" {
     Ok(uri) =>
       // 空键应该被处理
       assert_eq(uri.query() is Some(_), true)
-    Err(_) => abort("Empty key should be handled")
+    Err(_) => fail("Empty key should be handled")
   }
 
   // 空值的查询参数
   let empty_value_builder = builder.clone().query_param("key", "")
   match empty_value_builder.build() {
     Ok(uri) => assert_eq(uri.query() is Some(_), true)
-    Err(_) => abort("Empty value should be handled")
+    Err(_) => fail("Empty value should be handled")
   }
 
   // 同时为空的键值
   let both_empty_builder = builder.clone().query_param("", "")
   match both_empty_builder.build() {
     Ok(uri) => assert_eq(uri.query() is Some(_), true)
-    Err(_) => abort("Both empty key-value should be handled")
+    Err(_) => fail("Both empty key-value should be handled")
   }
 
   // 特殊字符键值
@@ -522,7 +522,7 @@ test "uri_builder_query_param_edge_cases" {
       assert_eq(query_str.contains("key"), true)
       assert_eq(query_str.contains("value"), true)
     }
-    Err(_) => abort("Special characters should be handled")
+    Err(_) => fail("Special characters should be handled")
   }
 
   // 多个相同键的参数
@@ -539,7 +539,7 @@ test "uri_builder_query_param_edge_cases" {
       assert_eq(query_str.contains("value2"), true)
       assert_eq(query_str.contains("other"), true)
     }
-    Err(_) => abort("Duplicate keys should be handled")
+    Err(_) => fail("Duplicate keys should be handled")
   }
 }
 
@@ -553,14 +553,14 @@ test "uri_builder_path_edge_cases" {
   let double_slash_builder = builder.clone().path("//double//slash//path")
   match double_slash_builder.build() {
     Ok(uri) => assert_eq(uri.path().contains("//"), false) // 双斜杠被规范化移除
-    Err(_) => abort("Double slash path should be handled")
+    Err(_) => fail("Double slash path should be handled")
   }
 
   // 以..开头的路径
   let dot_dot_path_builder = builder.clone().path("../relative/path")
   match dot_dot_path_builder.build() {
     Ok(uri) => assert_eq(uri.path().contains(".."), true)
-    Err(_) => abort("Dot-dot path should be handled")
+    Err(_) => fail("Dot-dot path should be handled")
   }
 
   // 包含特殊字符的路径
@@ -572,7 +572,7 @@ test "uri_builder_path_edge_cases" {
       assert_eq(uri.path().contains("path"), true)
       assert_eq(uri.path().contains("spaces"), true)
     }
-    Err(_) => abort("Special characters in path should be handled")
+    Err(_) => fail("Special characters in path should be handled")
   }
 
   // 极长的路径
@@ -594,7 +594,7 @@ test "uri_builder_path_edge_cases" {
       assert_eq(uri.path(), "/new/path")
       assert_eq(uri.path().contains("initial"), false)
     }
-    Err(_) => abort("Clear and set path should work")
+    Err(_) => fail("Clear and set path should work")
   }
 }
 
@@ -627,9 +627,9 @@ test "uri_builder_from_string_edge_cases" {
           assert_eq(uri.host(), Some("example.com"))
           assert_eq(uri.fragment(), Some("fragment"))
         }
-        Err(_) => abort("Valid URI with fragment should work")
+        Err(_) => fail("Valid URI with fragment should work")
       }
-    Err(_) => abort("Should parse valid URI with fragment")
+    Err(_) => fail("Should parse valid URI with fragment")
   }
 
   // 非常复杂的URI
@@ -645,9 +645,9 @@ test "uri_builder_from_string_edge_cases" {
           assert_eq(uri.query() is Some(_), true)
           assert_eq(uri.fragment(), Some("section"))
         }
-        Err(_) => abort("Complex URI should parse and build correctly")
+        Err(_) => fail("Complex URI should parse and build correctly")
       }
-    Err(_) => abort("Should parse complex URI")
+    Err(_) => fail("Should parse complex URI")
   }
 }
 
@@ -669,7 +669,7 @@ test "uri_builder_with_options_comprehensive" {
       // 查询参数应该被编码
       assert_eq(uri.query() is Some(_), true)
     }
-    Err(_) => abort("Builder with default options should work")
+    Err(_) => fail("Builder with default options should work")
   }
 
   // 测试构建器选项的基本功能
@@ -683,7 +683,7 @@ test "uri_builder_with_options_comprehensive" {
       assert_eq(uri.scheme(), "http")
       assert_eq(uri.host(), Some("test.com"))
     }
-    Err(_) => abort("Builder with options should work")
+    Err(_) => fail("Builder with options should work")
   }
 
   // 测试不同的构建器配置
@@ -697,7 +697,7 @@ test "uri_builder_with_options_comprehensive" {
       assert_eq(uri.scheme(), "ftp")
       assert_eq(uri.host(), Some("files.com"))
     }
-    Err(_) => abort("Builder with options should work")
+    Err(_) => fail("Builder with options should work")
   }
 }
 
@@ -716,7 +716,7 @@ test "uri_builder_path_handling_comprehensive" {
     .path_segment("")
   match empty_segments.build() {
     Ok(uri) => assert_eq(uri.path().contains("valid"), true)
-    Err(_) => abort("Empty path segments should be handled")
+    Err(_) => fail("Empty path segments should be handled")
   }
 
   // 测试特殊字符路径段
@@ -731,7 +731,7 @@ test "uri_builder_path_handling_comprehensive" {
       assert_eq(uri.path().contains("special"), true)
       assert_eq(uri.path().contains("slashes"), true)
     }
-    Err(_) => abort("Special character path segments should work")
+    Err(_) => fail("Special character path segments should work")
   }
 
   // 测试路径段数组
@@ -745,7 +745,7 @@ test "uri_builder_path_handling_comprehensive" {
       assert_eq(uri.path().contains("123"), true)
       assert_eq(uri.path().contains("profile"), true)
     }
-    Err(_) => abort("Path segments array should work")
+    Err(_) => fail("Path segments array should work")
   }
 
   // 测试路径清除和重建
@@ -761,7 +761,7 @@ test "uri_builder_path_handling_comprehensive" {
       assert_eq(uri.path().contains("new"), true)
       assert_eq(uri.path().contains("initial"), false)
     }
-    Err(_) => abort("Clear and rebuild path should work")
+    Err(_) => fail("Clear and rebuild path should work")
   }
 
   // 测试复杂路径解析
@@ -771,7 +771,7 @@ test "uri_builder_path_handling_comprehensive" {
     Ok(uri) =>
       // 路径应该被解析
       assert_eq(uri.path().length() > 0, true)
-    Err(_) => abort("Complex path should be parsed")
+    Err(_) => fail("Complex path should be parsed")
   }
 }
 
@@ -792,7 +792,7 @@ test "uri_builder_query_encoding_variants" {
       assert_eq(query.contains("search"), true)
       assert_eq(query.contains("filter"), true)
     }
-    Err(_) => abort("Basic query encoding should work")
+    Err(_) => fail("Basic query encoding should work")
   }
 
   // 测试特殊字符查询参数
@@ -806,7 +806,7 @@ test "uri_builder_query_encoding_variants" {
       assert_eq(query.contains("form"), true)
       assert_eq(query.contains("action"), true)
     }
-    Err(_) => abort("Special character encoding should work")
+    Err(_) => fail("Special character encoding should work")
   }
 
   // 测试复杂查询参数
@@ -820,7 +820,7 @@ test "uri_builder_query_encoding_variants" {
       assert_eq(query.contains("raw"), true)
       assert_eq(query.contains("unencoded"), true)
     }
-    Err(_) => abort("Complex query encoding should work")
+    Err(_) => fail("Complex query encoding should work")
   }
 }
 
@@ -845,7 +845,7 @@ test "uri_builder_conditional_query_params" {
       assert_eq(query.contains("whitespace"), true) // 空白字符不为空
       assert_eq(query.contains("null_like"), true)
     }
-    Err(_) => abort("Conditional query params should work")
+    Err(_) => fail("Conditional query params should work")
   }
 
   // 测试query_param_bool
@@ -863,7 +863,7 @@ test "uri_builder_conditional_query_params" {
       assert_eq(query.contains("active"), true)
       assert_eq(query.contains("inactive"), false)
     }
-    Err(_) => abort("Boolean query params should work")
+    Err(_) => fail("Boolean query params should work")
   }
 
   // 测试混合条件参数
@@ -883,7 +883,7 @@ test "uri_builder_conditional_query_params" {
       assert_eq(query.contains("missing"), false)
       assert_eq(query.contains("off"), false)
     }
-    Err(_) => abort("Mixed conditional params should work")
+    Err(_) => fail("Mixed conditional params should work")
   }
 }
 
@@ -912,7 +912,7 @@ test "uri_builder_query_manipulation" {
       assert_eq(query.contains("to_be_removed"), false)
       assert_eq(query.contains("duplicate_key"), false)
     }
-    Err(_) => abort("Remove query param should work")
+    Err(_) => fail("Remove query param should work")
   }
 
   // 测试移除不存在的键
@@ -925,14 +925,14 @@ test "uri_builder_query_manipulation" {
       assert_eq(query.contains("keep1"), true)
       assert_eq(query.contains("remove"), true)
     }
-    Err(_) => abort("Remove nonexistent key should not affect others")
+    Err(_) => fail("Remove nonexistent key should not affect others")
   }
 
   // 测试清除所有查询参数
   let cleared_builder = base_builder.clone().clear_query_params()
   match cleared_builder.build() {
     Ok(uri) => assert_eq(uri.query(), None)
-    Err(_) => abort("Clear all query params should work")
+    Err(_) => fail("Clear all query params should work")
   }
 
   // 测试清除后重新添加
@@ -949,7 +949,7 @@ test "uri_builder_query_manipulation" {
       assert_eq(query.contains("keep1"), false)
       assert_eq(query.contains("remove"), false)
     }
-    Err(_) => abort("Clear and re-add should work")
+    Err(_) => fail("Clear and re-add should work")
   }
 
   // 测试查询参数批量添加
@@ -969,7 +969,7 @@ test "uri_builder_query_manipulation" {
       assert_eq(query.contains("batch2"), true)
       assert_eq(query.contains("batch3"), true)
     }
-    Err(_) => abort("Batch query params should work")
+    Err(_) => fail("Batch query params should work")
   }
 }
 
@@ -984,7 +984,7 @@ test "uri_builder_scheme_validation" {
   for scheme in valid_schemes {
     match UriBuilder::new().scheme(scheme).host("example.com").build() {
       Ok(uri) => assert_eq(uri.scheme(), scheme)
-      Err(_) => abort("Valid scheme " + scheme + " should work")
+      Err(_) => fail("Valid scheme " + scheme + " should work")
     }
   }
 
@@ -993,27 +993,27 @@ test "uri_builder_scheme_validation" {
   for scheme in custom_schemes {
     match UriBuilder::new().scheme(scheme).host("example.com").build() {
       Ok(uri) => assert_eq(uri.scheme(), scheme)
-      Err(_) => abort("Custom scheme " + scheme + " should work")
+      Err(_) => fail("Custom scheme " + scheme + " should work")
     }
   }
 
   // 大小写测试
   match UriBuilder::new().scheme("HTTP").host("example.com").build() {
     Ok(uri) => assert_eq(uri.scheme(), "HTTP")
-    Err(_) => abort("Uppercase scheme should work")
+    Err(_) => fail("Uppercase scheme should work")
   }
   match UriBuilder::new().scheme("HtTp").host("example.com").build() {
     Ok(uri) => assert_eq(uri.scheme(), "HtTp")
-    Err(_) => abort("Mixed case scheme should work")
+    Err(_) => fail("Mixed case scheme should work")
   }
 
   // 错误的scheme测试
   match UriBuilder::new().scheme("").host("example.com").build() {
-    Ok(_) => abort("Empty scheme should fail")
+    Ok(_) => fail("Empty scheme should fail")
     Err(error) =>
       match error {
         InvalidScheme(_) => () // 预期错误
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 }
@@ -1027,44 +1027,44 @@ test "uri_builder_host_variations" {
   // 简单主机名
   match base_builder.clone().host("example").build() {
     Ok(uri) => assert_eq(uri.host(), Some("example"))
-    Err(_) => abort("Simple hostname should work")
+    Err(_) => fail("Simple hostname should work")
   }
 
   // 完全限定域名
   match base_builder.clone().host("api.example.com").build() {
     Ok(uri) => assert_eq(uri.host(), Some("api.example.com"))
-    Err(_) => abort("FQDN should work")
+    Err(_) => fail("FQDN should work")
   }
 
   // 带连字符的主机名
   match base_builder.clone().host("my-api-server.example-domain.com").build() {
     Ok(uri) => assert_eq(uri.host(), Some("my-api-server.example-domain.com"))
-    Err(_) => abort("Hyphenated hostname should work")
+    Err(_) => fail("Hyphenated hostname should work")
   }
 
   // 数字主机名
   match base_builder.clone().host("123server").build() {
     Ok(uri) => assert_eq(uri.host(), Some("123server"))
-    Err(_) => abort("Numeric hostname should work")
+    Err(_) => fail("Numeric hostname should work")
   }
 
   // IP地址格式
   match base_builder.clone().host("192.168.1.1").build() {
     Ok(uri) => assert_eq(uri.host(), Some("192.168.1.1"))
-    Err(_) => abort("IP address should work")
+    Err(_) => fail("IP address should work")
   }
 
   // 本地主机
   match base_builder.clone().host("localhost").build() {
     Ok(uri) => assert_eq(uri.host(), Some("localhost"))
-    Err(_) => abort("Localhost should work")
+    Err(_) => fail("Localhost should work")
   }
 
   // 非常长的主机名
   let long_host = "very-very-very-long-hostname-that-tests-the-limits-of-hostname-handling.example.com"
   match base_builder.clone().host(long_host).build() {
     Ok(uri) => assert_eq(uri.host(), Some(long_host))
-    Err(_) => abort("Long hostname should work")
+    Err(_) => fail("Long hostname should work")
   }
 
   // 包含端口的主机（应该在port()中处理）
@@ -1073,7 +1073,7 @@ test "uri_builder_host_variations" {
       assert_eq(uri.host(), Some("example.com"))
       assert_eq(uri.port(), Some(8080))
     }
-    Err(_) => abort("Host with separate port should work")
+    Err(_) => fail("Host with separate port should work")
   }
 }
 
@@ -1088,26 +1088,26 @@ test "uri_builder_port_validation" {
   for port in valid_ports {
     match base_builder.clone().port(port).build() {
       Ok(uri) => assert_eq(uri.port(), Some(port))
-      Err(_) => abort("Valid port " + port.to_string() + " should work")
+      Err(_) => fail("Valid port " + port.to_string() + " should work")
     }
   }
 
   // 边界端口测试
   match base_builder.clone().port(0).build() {
     Ok(uri) => assert_eq(uri.port(), Some(0))
-    Err(_) => abort("Port 0 should work")
+    Err(_) => fail("Port 0 should work")
   }
   match base_builder.clone().port(65535).build() {
     Ok(uri) => assert_eq(uri.port(), Some(65535))
-    Err(_) => abort("Port 65535 should work")
+    Err(_) => fail("Port 65535 should work")
   }
   match base_builder.clone().port(1).build() {
     Ok(uri) => assert_eq(uri.port(), Some(1))
-    Err(_) => abort("Port 1 should work")
+    Err(_) => fail("Port 1 should work")
   }
   match base_builder.clone().port(65534).build() {
     Ok(uri) => assert_eq(uri.port(), Some(65534))
-    Err(_) => abort("Port 65534 should work")
+    Err(_) => fail("Port 65534 should work")
   }
 
   // 默认端口测试
@@ -1116,21 +1116,21 @@ test "uri_builder_port_validation" {
       assert_eq(uri.scheme(), "http")
       assert_eq(uri.port(), Some(80))
     }
-    Err(_) => abort("HTTP default port should work")
+    Err(_) => fail("HTTP default port should work")
   }
   match base_builder.clone().scheme("https").port(443).build() {
     Ok(uri) => {
       assert_eq(uri.scheme(), "https")
       assert_eq(uri.port(), Some(443))
     }
-    Err(_) => abort("HTTPS default port should work")
+    Err(_) => fail("HTTPS default port should work")
   }
   match base_builder.clone().scheme("ftp").port(21).build() {
     Ok(uri) => {
       assert_eq(uri.scheme(), "ftp")
       assert_eq(uri.port(), Some(21))
     }
-    Err(_) => abort("FTP default port should work")
+    Err(_) => fail("FTP default port should work")
   }
 }
 
@@ -1147,9 +1147,9 @@ test "uri_builder_userinfo_handling" {
     Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some("username"))
-        None => abort("Should have authority with userinfo")
+        None => fail("Should have authority with userinfo")
       }
-    Err(_) => abort("Simple userinfo should work")
+    Err(_) => fail("Simple userinfo should work")
   }
 
   // 用户名和密码
@@ -1157,9 +1157,9 @@ test "uri_builder_userinfo_handling" {
     Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some("user:pass"))
-        None => abort("Should have authority with credentials")
+        None => fail("Should have authority with credentials")
       }
-    Err(_) => abort("Credentials should work")
+    Err(_) => fail("Credentials should work")
   }
 
   // 包含特殊字符的用户信息
@@ -1167,9 +1167,9 @@ test "uri_builder_userinfo_handling" {
     Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some("user@domain.com"))
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
-    Err(_) => abort("Userinfo with @ should work")
+    Err(_) => fail("Userinfo with @ should work")
   }
 
   // 复杂的用户名和密码
@@ -1183,9 +1183,9 @@ test "uri_builder_userinfo_handling" {
           assert_eq(userinfo.contains("p@ssw0rd!"), true)
           assert_eq(userinfo.contains(":"), true)
         }
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
-    Err(_) => abort("Complex credentials should work")
+    Err(_) => fail("Complex credentials should work")
   }
 
   // 空用户信息
@@ -1193,9 +1193,9 @@ test "uri_builder_userinfo_handling" {
     Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some(""))
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
-    Err(_) => abort("Empty userinfo should work")
+    Err(_) => fail("Empty userinfo should work")
   }
 
   // 空用户名和密码
@@ -1203,9 +1203,9 @@ test "uri_builder_userinfo_handling" {
     Ok(uri) =>
       match uri.authority {
         Some(auth) => assert_eq(auth.userinfo, Some(":"))
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
-    Err(_) => abort("Empty credentials should work")
+    Err(_) => fail("Empty credentials should work")
   }
 
   // 同时设置userinfo和credentials（后者应该覆盖前者）
@@ -1222,9 +1222,9 @@ test "uri_builder_userinfo_handling" {
           assert_eq(userinfo.contains("second"), true)
           assert_eq(userinfo.contains("first"), false)
         }
-        None => abort("Should have authority")
+        None => fail("Should have authority")
       }
-    Err(_) => abort("Overriding userinfo should work")
+    Err(_) => fail("Overriding userinfo should work")
   }
 }
 
@@ -1238,7 +1238,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.scheme(), "mailto")
       assert_eq(uri.path(), "user@example.com")
     }
-    Err(_) => abort("Mailto scheme should work")
+    Err(_) => fail("Mailto scheme should work")
   }
 
   // tel scheme - 不需要前导斜杠
@@ -1247,7 +1247,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.scheme(), "tel")
       assert_eq(uri.path(), "+1234567890")
     }
-    Err(_) => abort("Tel scheme should work")
+    Err(_) => fail("Tel scheme should work")
   }
 
   // urn scheme - 不需要前导斜杠
@@ -1256,7 +1256,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.scheme(), "urn")
       assert_eq(uri.path(), "isbn:123456789")
     }
-    Err(_) => abort("URN scheme should work")
+    Err(_) => fail("URN scheme should work")
   }
 
   // file scheme - 通常没有authority
@@ -1266,7 +1266,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.path(), "/home/user/file.txt")
       assert_eq(uri.authority, None)
     }
-    Err(_) => abort("File scheme should work")
+    Err(_) => fail("File scheme should work")
   }
 
   // HTTP scheme - 有authority时空路径的处理
@@ -1277,7 +1277,7 @@ test "uri_builder_special_schemes_and_paths" {
       // 有authority但无显式路径的情况
       assert_eq(uri.path().length() >= 0, true)
     }
-    Err(_) => abort("HTTP with authority but no path should work")
+    Err(_) => fail("HTTP with authority but no path should work")
   }
 
   // HTTP scheme - 显式设置空路径
@@ -1287,7 +1287,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.host(), Some("example.com"))
       assert_eq(uri.path(), "")
     }
-    Err(_) => abort("HTTP with explicit empty path should work")
+    Err(_) => fail("HTTP with explicit empty path should work")
   }
 
   // HTTP scheme - 显式设置根路径
@@ -1297,7 +1297,7 @@ test "uri_builder_special_schemes_and_paths" {
       assert_eq(uri.host(), Some("example.com"))
       assert_eq(uri.path(), "/")
     }
-    Err(_) => abort("HTTP with root path should work")
+    Err(_) => fail("HTTP with root path should work")
   }
 }
 
@@ -1308,14 +1308,14 @@ test "uri_builder_path_parsing_functions" {
   // 测试空路径的解析
   match UriBuilder::new().scheme("https").host("example.com").path("").build() {
     Ok(uri) => assert_eq(uri.path(), "")
-    Err(_) => abort("Empty path parsing should work")
+    Err(_) => fail("Empty path parsing should work")
   }
 
   // 测试根路径解析
   match
     UriBuilder::new().scheme("https").host("example.com").path("/").build() {
     Ok(uri) => assert_eq(uri.path(), "/")
-    Err(_) => abort("Root path parsing should work")
+    Err(_) => fail("Root path parsing should work")
   }
 
   // 测试简单路径解析
@@ -1326,7 +1326,7 @@ test "uri_builder_path_parsing_functions" {
     .path("/api/users/123")
     .build() {
     Ok(uri) => assert_eq(uri.path(), "/api/users/123")
-    Err(_) => abort("Simple path parsing should work")
+    Err(_) => fail("Simple path parsing should work")
   }
 
   // 测试复杂路径解析（带特殊字符）
@@ -1340,7 +1340,7 @@ test "uri_builder_path_parsing_functions" {
       assert_eq(uri.path().contains("spaces"), true)
       assert_eq(uri.path().contains("symbols"), true)
     }
-    Err(_) => abort("Complex path parsing should work")
+    Err(_) => fail("Complex path parsing should work")
   }
 
   // 测试多段路径解析
@@ -1356,7 +1356,7 @@ test "uri_builder_path_parsing_functions" {
       assert_eq(uri.path().contains("segment3"), true)
       assert_eq(uri.path().contains("segment4"), true)
     }
-    Err(_) => abort("Multi-segment path parsing should work")
+    Err(_) => fail("Multi-segment path parsing should work")
   }
 
   // 测试路径末尾有斜杠的情况
@@ -1367,7 +1367,7 @@ test "uri_builder_path_parsing_functions" {
     .path("/api/users/")
     .build() {
     Ok(uri) => assert_eq(uri.path().contains("/api/users"), true)
-    Err(_) => abort("Path with trailing slash should work")
+    Err(_) => fail("Path with trailing slash should work")
   }
 
   // 测试路径中有双斜杠的情况
@@ -1381,7 +1381,7 @@ test "uri_builder_path_parsing_functions" {
       assert_eq(uri.path().contains("double"), true)
       assert_eq(uri.path().contains("slash"), true)
     }
-    Err(_) => abort("Path with double slashes should work")
+    Err(_) => fail("Path with double slashes should work")
   }
 }
 
@@ -1400,7 +1400,7 @@ test "uri_builder_query_string_functions" {
       let query = uri.query().unwrap()
       assert_eq(query, "single=value")
     }
-    Err(_) => abort("Single query param should work")
+    Err(_) => fail("Single query param should work")
   }
 
   // 多个查询参数
@@ -1419,7 +1419,7 @@ test "uri_builder_query_string_functions" {
       assert_eq(query.contains("third=value3"), true)
       assert_eq(query.contains("&"), true)
     }
-    Err(_) => abort("Multiple query params should work")
+    Err(_) => fail("Multiple query params should work")
   }
 
   // 空值查询参数
@@ -1435,7 +1435,7 @@ test "uri_builder_query_string_functions" {
       assert_eq(query.contains("empty"), true)
       assert_eq(query.contains("normal=value"), true)
     }
-    Err(_) => abort("Empty value query param should work")
+    Err(_) => fail("Empty value query param should work")
   }
 
   // 特殊字符查询参数
@@ -1451,7 +1451,7 @@ test "uri_builder_query_string_functions" {
       assert_eq(query.contains("special"), true)
       assert_eq(query.contains("spaces"), true)
     }
-    Err(_) => abort("Special char query params should work")
+    Err(_) => fail("Special char query params should work")
   }
 
   // 大量查询参数
@@ -1470,7 +1470,7 @@ test "uri_builder_query_string_functions" {
       assert_eq(query.contains("value0"), true)
       assert_eq(query.contains("value19"), true)
     }
-    Err(_) => abort("Large number of query params should work")
+    Err(_) => fail("Large number of query params should work")
   }
 }
 
@@ -1501,7 +1501,7 @@ test "uri_builder_clone_and_copy_functions" {
       assert_eq(uri.query() is Some(_), true)
       assert_eq(uri.fragment(), Some("section"))
     }
-    Err(_) => abort("Cloned builder should work")
+    Err(_) => fail("Cloned builder should work")
   }
 
   // 测试克隆后修改不影响原始
@@ -1519,7 +1519,7 @@ test "uri_builder_clone_and_copy_functions" {
       assert_eq(uri.path().contains("api"), true)
       assert_eq(uri.query() is Some(_), true)
     }
-    Err(_) => abort("Modified clone should work")
+    Err(_) => fail("Modified clone should work")
   }
 
   // 原始构建器应该不受影响
@@ -1529,7 +1529,7 @@ test "uri_builder_clone_and_copy_functions" {
       assert_eq(uri.host(), Some("api.example.com"))
       assert_eq(uri.port(), Some(8443))
     }
-    Err(_) => abort("Original builder should be unchanged")
+    Err(_) => fail("Original builder should be unchanged")
   }
 }
 
@@ -1539,21 +1539,21 @@ test "uri_builder_error_propagation" {
 
   // 缺少scheme的错误
   match UriBuilder::new().host("example.com").path("/path").build() {
-    Ok(_) => abort("Should fail without scheme")
+    Ok(_) => fail("Should fail without scheme")
     Err(error) =>
       match error {
         InvalidScheme(_) => () // 预期错误
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 
   // 空scheme的错误
   match UriBuilder::new().scheme("").host("example.com").build() {
-    Ok(_) => abort("Should fail with empty scheme")
+    Ok(_) => fail("Should fail with empty scheme")
     Err(error) =>
       match error {
         InvalidScheme(_) => () // 预期错误
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 
@@ -1566,11 +1566,11 @@ test "uri_builder_error_propagation" {
     .query_param("test", "value")
     .fragment("section")
     .build() {
-    Ok(_) => abort("Should fail without scheme even with other components")
+    Ok(_) => fail("Should fail without scheme even with other components")
     Err(error) =>
       match error {
         InvalidScheme(_) => () // 预期错误
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 }
@@ -1597,22 +1597,22 @@ test "uri_builder_build_string_function" {
       assert_eq(uri_string.contains("include=profile"), true)
       assert_eq(uri_string.contains("#details"), true)
     }
-    Err(_) => abort("Build string should succeed")
+    Err(_) => fail("Build string should succeed")
   }
 
   // 构建失败的字符串
   match UriBuilder::new().host("example.com").build_string() {
-    Ok(_) => abort("Should fail to build string without scheme")
+    Ok(_) => fail("Should fail to build string without scheme")
     Err(error) =>
       match error {
         InvalidScheme(_) => () // 预期错误
-        _ => abort("Should be InvalidScheme error")
+        _ => fail("Should be InvalidScheme error")
       }
   }
 
   // 最简单的有效URI字符串
   match UriBuilder::new().scheme("http").host("localhost").build_string() {
     Ok(uri_string) => assert_eq(uri_string, "http://localhost")
-    Err(_) => abort("Simple URI string should build")
+    Err(_) => fail("Simple URI string should build")
   }
 }

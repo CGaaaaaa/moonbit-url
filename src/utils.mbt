@@ -10,7 +10,7 @@ pub fn parse_int(s : String) -> Int? {
   let mut result = 0
   for i = 0; i < s.length(); i = i + 1 {
     let c = Int::unsafe_to_char(s[i])
-    if is_digit_char(c) {
+    if c.is_ascii_digit() {
       result = result * 10 + (s[i] - 48) // 48 is '0' in ASCII
     } else {
       return None
@@ -72,27 +72,9 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
 }
 
 ///|
-/// 验证字符是否为十六进制
-pub fn is_hex_char(c : Char) -> Bool {
-  (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')
-}
-
-///|
-/// 检查字符是否为字母
-pub fn is_alpha_char(c : Char) -> Bool {
-  (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-}
-
-///|
-/// 检查字符是否为数字
-pub fn is_digit_char(c : Char) -> Bool {
-  c >= '0' && c <= '9'
-}
-
-///|
 /// 检查字符是否为字母数字
 pub fn is_alphanumeric_char(c : Char) -> Bool {
-  is_alpha_char(c) || is_digit_char(c)
+  c.is_ascii_alphabetic() || c.is_ascii_digit()
 }
 
 ///|

@@ -400,7 +400,7 @@ fn is_valid_scheme(scheme : String) -> Bool {
 
   // 第一个字符必须是字母
   let first = Int::unsafe_to_char(scheme[0])
-  if not(is_alpha_char(first)) {
+  if not(first.is_ascii_alphabetic()) {
     return false
   }
 
@@ -2173,7 +2173,7 @@ fn is_valid_ipv6_segment(segment : String) -> Bool {
   }
   for i = 0; i < segment.length(); i = i + 1 {
     let c = Int::unsafe_to_char(segment[i])
-    if not(is_hex_char(c)) {
+    if not(c.is_ascii_hexdigit()) {
       return false
     }
   }

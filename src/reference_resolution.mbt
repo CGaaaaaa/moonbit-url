@@ -28,7 +28,7 @@ fn is_valid_scheme_syntax(scheme : String) -> Bool {
     return false
   }
   let first = Int::unsafe_to_char(scheme[0])
-  if not(is_alpha_char(first)) {
+  if not(first.is_ascii_alphabetic()) {
     return false
   }
   for i = 1; i < scheme.length(); i = i + 1 {

@@ -28,15 +28,9 @@ fn http_url(String, String) -> UriBuilder
 
 fn https_url(String, String) -> UriBuilder
 
-fn is_alpha_char(Char) -> Bool
-
 fn is_alphanumeric_char(Char) -> Bool
 
-fn is_digit_char(Char) -> Bool
-
 fn is_empty(String) -> Bool
-
-fn is_hex_char(Char) -> Bool
 
 fn is_not_empty(String) -> Bool
 

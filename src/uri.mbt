@@ -666,7 +666,7 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   let normalized_authority = match self.authority {
     Some(auth) => {
       let lowered_host = if auth.host.length() > 0 {
-        to_lowercase(auth.host)
+        auth.host.to_lower()
       } else {
         auth.host
       }
@@ -848,7 +848,7 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
   let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label.to_string())
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -912,7 +912,7 @@ fn normalize_host_with_profile_strict(
   let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label.to_string())
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -981,7 +981,7 @@ pub fn domain_to_unicode(domain : String) -> String {
   let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label.to_string())
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -1952,7 +1952,7 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
           } else {
             try! seg[j:].to_string()
           }
-          cleaned.push(to_lowercase(trimmed))
+          cleaned.push(trimmed.to_lower())
         }
       }
       // 找到最长的连续 "0" 段序列用于 :: 压缩

@@ -102,7 +102,7 @@ pub fn is_sub_delim_char(c : Char) -> Bool {
 ///|
 /// 获取scheme的默认端口号
 pub fn get_default_port(scheme : String) -> Int? {
-  let lower_scheme = to_lowercase(scheme)
+  let lower_scheme = scheme.to_lower()
   match lower_scheme {
     "http" => Some(80)
     "https" => Some(443)
@@ -121,19 +121,4 @@ pub fn get_default_port(scheme : String) -> Int? {
     "pop3s" => Some(995)
     _ => None
   }
-}
-
-///|
-/// 将字符串转换为小写
-pub fn to_lowercase(s : String) -> String {
-  let mut result = ""
-  for i = 0; i < s.length(); i = i + 1 {
-    let c = s[i]
-    if c >= Char::to_int('A') && c <= Char::to_int('Z') {
-      result = result + Int::unsafe_to_char(c + 32).to_string()
-    } else {
-      result = result + Int::unsafe_to_char(c).to_string()
-    }
-  }
-  result
 }

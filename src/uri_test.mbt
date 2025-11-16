@@ -510,7 +510,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
   match Uri::parse("http://\u0661\u06F2.example/") {
     Ok(_uri) => {
       let strict_ascii = domain_to_ascii_strict(
-        to_lowercase("\u0661\u06F2.example"),
+        "\u0661\u06F2.example".to_lower(),
       )
       assert_eq(strict_ascii, None)
     }

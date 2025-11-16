@@ -4,7 +4,7 @@
 ///|
 /// 简单的整数解析
 pub fn parse_int(s : String) -> Int? {
-  if is_empty(s) {
+  if s.is_empty() {
     return None
   }
   let mut result = 0
@@ -53,7 +53,7 @@ pub fn hex_char_to_int(c : Char) -> Int? {
 ///|
 /// 解析查询字符串
 pub fn parse_query_string(query : String) -> Array[(String, String)] {
-  if is_empty(query) {
+  if query.is_empty() {
     return []
   }
   let params : Array[(String, String)] = []
@@ -121,18 +121,6 @@ pub fn get_default_port(scheme : String) -> Int? {
     "pop3s" => Some(995)
     _ => None
   }
-}
-
-///|
-/// 检查字符串是否为空（简化实现）
-pub fn is_empty(s : String) -> Bool {
-  s.length() == 0
-}
-
-///|
-/// 检查字符串是否非空
-pub fn is_not_empty(s : String) -> Bool {
-  s.length() > 0
 }
 
 ///|

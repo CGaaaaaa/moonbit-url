@@ -91,7 +91,7 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   let mut target_fragment = None
 
   // 如果引用定义了scheme，则这是一个绝对引用
-  if is_not_empty(reference.scheme) {
+  if !reference.scheme.is_empty() {
     target_scheme = reference.scheme
     target_authority = reference.authority
     target_path = remove_dot_segments(reference.path)
@@ -104,7 +104,7 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
       target_query = reference.query
     } else {
       // 没有权威部分
-      if is_empty(reference.path) {
+      if reference.path.is_empty() {
         target_path = base.path
         if reference.query is Some(_) {
           target_query = reference.query
@@ -136,11 +136,11 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
 ///|
 /// 合并路径（RFC 3986 Section 5.2.3）
 fn merge_paths(base : Uri, path : String) -> String {
-  if base.authority is Some(_) && is_empty(base.path) {
+  if base.authority is Some(_) && base.path.is_empty() {
     "/" + path
   } else {
     let base_parent = get_parent_path(base.path)
-    if is_empty(base_parent) {
+    if base_parent.is_empty() {
       path
     } else if base_parent == "/" {
       "/" + path
@@ -158,7 +158,7 @@ pub fn remove_dot_segments(path : String) -> String {
   }
   let mut input = path
   let mut output = ""
-  while is_not_empty(input) {
+  while !input.is_empty() {
     let mut handled = false
 
     // A. 如果输入以 "../" 或 "./" 开头，移除这些前缀

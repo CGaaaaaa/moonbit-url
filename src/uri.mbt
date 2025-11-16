@@ -225,7 +225,7 @@ pub fn UriError::to_string(self : UriError) -> String {
 ///|
 /// 解析 URI
 pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
-  if is_empty(input) {
+  if input.is_empty() {
     return Err(ParseError("Empty URI"))
   }
 
@@ -389,7 +389,7 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
 /// - 长度合理（实际限制建议不超过64字符）
 /// - 大小写不敏感（接受大写，但会标准化为小写）
 fn is_valid_scheme(scheme : String) -> Bool {
-  if is_empty(scheme) {
+  if scheme.is_empty() {
     return false
   }
 
@@ -526,7 +526,7 @@ pub fn Uri::fragment(self : Uri) -> String? {
 ///|
 /// 检查是否为相对URI（无scheme）
 pub fn Uri::is_relative(self : Uri) -> Bool {
-  is_empty(self.scheme)
+  self.scheme.is_empty()
 }
 
 ///|
@@ -636,7 +636,7 @@ pub fn Uri::equals_normalized(self : Uri, other : Uri) -> Bool {
 /// 检查是否为绝对URI
 pub fn Uri::is_absolute(self : Uri) -> Bool {
   // 绝对URI：拥有非空 scheme 即视为绝对（RFC 3986）
-  is_not_empty(self.scheme)
+  !self.scheme.is_empty()
 }
 
 ///|

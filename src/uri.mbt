@@ -32,7 +32,7 @@ pub fn Authority::new(
 /// 
 /// 代表一个完整的URI，包含所有组件
 /// 格式: scheme:[//authority]path[?query][#fragment]
-pub struct Uri {
+pub(all) struct Uri {
   /// URI方案，如http、https、ftp等
   scheme : String
   /// 权威部分，包含主机信息

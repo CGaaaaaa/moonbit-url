@@ -244,13 +244,13 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
       let mut fragment : String? = None
 
       // 检查是否有 authority（以 "//" 开头）
-      if has_prefix(remaining, "//") {
+      if remaining.has_prefix("//") {
         remaining = try! remaining[2:].to_string()
 
         // 找到 authority 结束位置（由 path、query 或 fragment 标记）
         let mut auth_end = remaining.length()
         for delimiter in ['/', '?', '#'] {
-          match find_char(remaining, delimiter) {
+          match remaining.find(Char::to_string(delimiter)) {
             Some(pos) => if pos < auth_end { auth_end = pos }
             None => ()
           }
@@ -271,7 +271,7 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
 
       // 解析 path、query 和 fragment
       // 先提取 fragment（最后的 #）
-      match find_char(remaining, '#') {
+      match remaining.find("#") {
         Some(frag_pos) => {
           fragment = Some(try! remaining[frag_pos + 1:].to_string())
           remaining = try! remaining[0:frag_pos].to_string()
@@ -280,7 +280,7 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
       }
 
       // 然后提取 query（最后的 ?）
-      match find_char(remaining, '?') {
+      match remaining.find("?") {
         Some(query_pos) => {
           query = Some(try! remaining[query_pos + 1:].to_string())
           remaining = try! remaining[0:query_pos].to_string()
@@ -305,7 +305,7 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   let mut port : Int? = None
 
   // 检查 userinfo
-  match find_char(remaining, '@') {
+  match remaining.find("@") {
     Some(pos) => {
       let userinfo_part = try! remaining[0:pos].to_string()
       // 验证userinfo格式
@@ -320,8 +320,8 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   }
 
   // 检查 IPv6 地址
-  if has_prefix(remaining, "[") {
-    match find_char(remaining, ']') {
+  if remaining.has_prefix("[") {
+    match remaining.find("]") {
       Some(pos) => {
         let ipv6_part = try! remaining[1:pos].to_string() // 去掉方括号
         if not(is_valid_ipv6(ipv6_part)) {
@@ -339,7 +339,7 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
     }
   } else {
     // 普通 host，查找 port 分隔符
-    match find_char(remaining, ':') {
+    match remaining.find(":") {
       Some(pos) => {
         host = try! remaining[0:pos].to_string()
         remaining = try! remaining[pos + 1:].to_string()
@@ -354,7 +354,7 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   // 解析 port
   if remaining.length() > 0 {
     // 兼容两种分支：非IPv6分支已消费冒号、IPv6分支保留冒号
-    let port_str = if has_prefix(remaining, ":") {
+    let port_str = if remaining.has_prefix(":") {
       try! remaining[1:].to_string()
     } else {
       remaining
@@ -686,7 +686,7 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
         host_after_trailing
       }
       let final_host = if options.ipv6_normalize &&
-        has_prefix(host_after_idna, "[") {
+        host_after_idna.has_prefix("[") {
         normalize_ipv6_literal(host_after_idna)
       } else {
         host_after_idna
@@ -793,7 +793,7 @@ fn collapse_host_dots(host : String) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   }
   let labels = host.split(".")
@@ -812,7 +812,7 @@ fn strip_trailing_dot(host : String) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   }
   if host.has_suffix(".") {
@@ -841,7 +841,7 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   } // IPv6
   let preprocessed = map_alt_dots(host)
@@ -853,7 +853,7 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
+    if lower.has_prefix("xn--") {
       out_labels.push(lower)
       continue
     }
@@ -905,7 +905,7 @@ fn normalize_host_with_profile_strict(
   if host.length() == 0 {
     return Some(host)
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return Some(host)
   } // IPv6
   let preprocessed = map_alt_dots(host)
@@ -917,7 +917,7 @@ fn normalize_host_with_profile_strict(
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
+    if lower.has_prefix("xn--") {
       out_labels.push(lower)
       continue
     }
@@ -974,7 +974,7 @@ pub fn domain_to_unicode(domain : String) -> String {
   if domain.length() == 0 {
     return domain
   }
-  if has_prefix(domain, "[") {
+  if domain.has_prefix("[") {
     return domain
   }
   let preprocessed = map_alt_dots(domain)
@@ -986,7 +986,7 @@ pub fn domain_to_unicode(domain : String) -> String {
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
+    if lower.has_prefix("xn--") {
       let puny = try! lower[4:].to_string()
       match punycode_decode_strict(puny) {
         Some(decoded) => {
@@ -1917,10 +1917,10 @@ fn normalize_percent_encoding_in_string(
 /// - 压缩最长的连续零段为 ::（仅一次，选择最左）
 fn normalize_ipv6_literal(host_with_brackets : String) -> String {
   // 输入形如 "[2001:0DB8:0000:0000:0000:ff00:0042:8329]" 或带 zone-id
-  if !has_prefix(host_with_brackets, "[") {
+  if !host_with_brackets.has_prefix("[") {
     return host_with_brackets
   }
-  match find_char(host_with_brackets, ']') {
+  match host_with_brackets.find("]") {
     Some(end_idx) => {
       let inside = try! host_with_brackets[1:end_idx].to_string()
       // 保留可能的 zone-id（%25...）
@@ -2211,11 +2211,11 @@ fn split_ipv6_segments(ipv6 : String) -> Array[String] {
 /// 验证IPv4映射的IPv6地址
 fn validate_ipv4_mapped_ipv6(ipv6 : String) -> Bool {
   // ::ffff:192.0.2.1 格式
-  if has_prefix(ipv6, "::ffff:") {
+  if ipv6.has_prefix("::ffff:") {
     let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }
-  if has_prefix(ipv6, "::FFFF:") {
+  if ipv6.has_prefix("::FFFF:") {
     let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }

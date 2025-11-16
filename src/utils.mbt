@@ -2,17 +2,6 @@
 /// 集中管理重复使用的字符串处理、数组操作等工具函数
 
 ///|
-/// 查找字符位置
-pub fn find_char(s : String, c : Char) -> Int? {
-  for i = 0; i < s.length(); i = i + 1 {
-    if s[i] == Char::to_int(c) {
-      return Some(i)
-    }
-  }
-  None
-}
-
-///|
 /// 简单的整数解析
 pub fn parse_int(s : String) -> Int? {
   if is_empty(s) {
@@ -80,20 +69,6 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
     }
   }
   params
-}
-
-///|
-/// 检查字符串是否有指定前缀
-pub fn has_prefix(s : String, prefix : String) -> Bool {
-  if prefix.length() > s.length() {
-    return false
-  }
-  for i = 0; i < prefix.length(); i = i + 1 {
-    if s[i] != prefix[i] {
-      return false
-    }
-  }
-  true
 }
 
 ///|

@@ -20,13 +20,9 @@ fn domain_to_unicode(String) -> String
 
 fn encode_query_param(String) -> String
 
-fn find_char(String, Char) -> Int?
-
 fn find_substring(String, String) -> Int?
 
 fn get_default_port(String) -> Int?
-
-fn has_prefix(String, String) -> Bool
 
 fn hex_char_to_int(Char) -> Int?
 

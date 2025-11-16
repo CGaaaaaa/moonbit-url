@@ -269,6 +269,14 @@ test "percent_encoding_basic" {
   let query_encoded = encode_query_param("hello world+test")
   assert_eq(query_encoded, "hello+world%2Btest")
 
+  // 测试空字符串
+  let empty_encoded = encode_query_param("")
+  assert_eq(empty_encoded, "")
+
+  // 测试无需编码的字符串
+  let no_encode_needed = encode_query_param("helloworld")
+  assert_eq(no_encode_needed, "helloworld")
+
   // 解码测试
   match percent_decode("hello%20world") {
     Ok(decoded) => assert_eq(decoded, "hello world")
@@ -1537,23 +1545,6 @@ test "uri_builder_edge_cases" {
     }
     Err(_) => abort("Should handle URI without host")
   }
-}
-
-///|
-test "percent_encoding_basic" {
-  // 测试百分号编码的基本功能（使用简化API）
-
-  // 使用encode_query_param函数替代percent_encode
-  let basic_encoded = encode_query_param("hello world")
-  assert_eq(basic_encoded, "hello+world") // query参数用+编码空格
-
-  // 测试空字符串
-  let empty_encoded = encode_query_param("")
-  assert_eq(empty_encoded, "")
-
-  // 测试无需编码的字符串
-  let no_encode_needed = encode_query_param("helloworld")
-  assert_eq(no_encode_needed, "helloworld")
 }
 
 ///|

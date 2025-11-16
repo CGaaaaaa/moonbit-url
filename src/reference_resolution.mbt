@@ -16,7 +16,7 @@ fn get_parent_path(path : String) -> String {
   if last_slash == 0 {
     return "/"
   }
-  path.substring(start=0, end=last_slash)
+  try! path[0:last_slash].to_string()
 }
 
 // 使用通用工具函数：`utils.mbt` 中的 `is_alpha_char` 与 `is_alphanumeric_char`
@@ -68,7 +68,7 @@ fn has_absolute_uri_syntax(reference : String) -> Bool {
       if colon_pos >= min_sep {
         return false
       }
-      let scheme = reference.substring(start=0, end=colon_pos)
+      let scheme = try! reference[0:colon_pos].to_string()
       is_valid_scheme_syntax(scheme)
     }
     None => false
@@ -163,16 +163,16 @@ pub fn remove_dot_segments(path : String) -> String {
 
     // A. 如果输入以 "../" 或 "./" 开头，移除这些前缀
     if input.has_prefix("../") {
-      input = input.substring(start=3)
+      input = try! input[3:].to_string()
       handled = true
     } else if input.has_prefix("./") {
-      input = input.substring(start=2)
+      input = try! input[2:].to_string()
       handled = true
     }
 
     // B. 如果输入以 "/./" 或 "/." 开头
     if !handled && input.has_prefix("/./") {
-      input = "/" + input.substring(start=3)
+      input = "/" + (try! input[3:].to_string())
       handled = true
     } else if !handled && input == "/." {
       input = "/"
@@ -181,7 +181,7 @@ pub fn remove_dot_segments(path : String) -> String {
 
     // C. 如果输入以 "/../" 开头或等于 "/.."
     if !handled && input.has_prefix("/../") {
-      input = "/" + input.substring(start=4)
+      input = "/" + (try! input[4:].to_string())
       output = remove_last_segment(output)
       handled = true
     } else if !handled && input == "/.." {
@@ -200,13 +200,13 @@ pub fn remove_dot_segments(path : String) -> String {
     if !handled {
       if input.has_prefix("/") {
         // 查找第一个 / 后的下一个 /
-        let remaining = input.substring(start=1)
+        let remaining = try! input[1:].to_string()
         let slash_pos = remaining.find("/")
         match slash_pos {
           Some(pos) => {
             let actual_pos = pos + 1
-            output = output + input.substring(start=0, end=actual_pos)
-            input = input.substring(start=actual_pos)
+            output = output + (try! input[0:actual_pos].to_string())
+            input = try! input[actual_pos:].to_string()
           }
           None => {
             output = output + input
@@ -217,8 +217,8 @@ pub fn remove_dot_segments(path : String) -> String {
         let slash_pos = input.find("/")
         match slash_pos {
           Some(pos) => {
-            output = output + input.substring(start=0, end=pos)
-            input = input.substring(start=pos)
+            output = output + (try! input[0:pos].to_string())
+            input = try! input[pos:].to_string()
           }
           None => {
             output = output + input
@@ -250,7 +250,7 @@ fn remove_last_segment(path : String) -> String {
     i = i - 1
   }
   if last_slash >= 0 {
-    path.substring(start=0, end=last_slash)
+    try! path[0:last_slash].to_string()
   } else {
     ""
   }
@@ -303,7 +303,7 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
             scheme: "",
             authority: None,
             path: "",
-            query: Some(reference.substring(start=1)),
+            query: Some(try! reference[1:].to_string()),
             fragment: None,
           }
           match resolve_reference(base_uri, rel) {
@@ -322,7 +322,7 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
             authority: None,
             path: "",
             query: None,
-            fragment: Some(reference.substring(start=1)),
+            fragment: Some(try! reference[1:].to_string()),
           }
           match resolve_reference(base_uri, rel) {
             Ok(resolved) => {

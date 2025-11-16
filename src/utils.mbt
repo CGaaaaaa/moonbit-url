@@ -90,8 +90,8 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
   for pair in pairs {
     match find_char(pair, '=') {
       Some(pos) => {
-        let key = pair.substring(start=0, end=pos)
-        let value = pair.substring(start=pos + 1)
+        let key = try! pair[0:pos].to_string()
+        let value = try! pair[pos + 1:].to_string()
         params.push((key, value))
       }
       None => params.push((pair, ""))

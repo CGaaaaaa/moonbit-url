@@ -233,11 +233,11 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
   // 首先找到 scheme 分隔符
   match find_substring(input, ":") {
     Some(scheme_pos) => {
-      let scheme = input.substring(start=0, end=scheme_pos)
+      let scheme = try! input[0:scheme_pos].to_string()
       if not(is_valid_scheme(scheme)) {
         return Err(InvalidScheme("Invalid scheme: " + scheme))
       }
-      let mut remaining = input.substring(start=scheme_pos + 1)
+      let mut remaining = try! input[scheme_pos + 1:].to_string()
       let mut authority : Authority? = None
       let mut path = ""
       let mut query : String? = None
@@ -245,7 +245,7 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
 
       // 检查是否有 authority（以 "//" 开头）
       if has_prefix(remaining, "//") {
-        remaining = remaining.substring(start=2)
+        remaining = try! remaining[2:].to_string()
 
         // 找到 authority 结束位置（由 path、query 或 fragment 标记）
         let mut auth_end = remaining.length()
@@ -255,8 +255,8 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
             None => ()
           }
         }
-        let auth_str = remaining.substring(start=0, end=auth_end)
-        remaining = remaining.substring(start=auth_end)
+        let auth_str = try! remaining[0:auth_end].to_string()
+        remaining = try! remaining[auth_end:].to_string()
         match parse_authority(auth_str) {
           Ok(auth) => {
             // 如果主机为空且scheme不是file，则视为错误
@@ -273,8 +273,8 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
       // 先提取 fragment（最后的 #）
       match find_char(remaining, '#') {
         Some(frag_pos) => {
-          fragment = Some(remaining.substring(start=frag_pos + 1))
-          remaining = remaining.substring(start=0, end=frag_pos)
+          fragment = Some(try! remaining[frag_pos + 1:].to_string())
+          remaining = try! remaining[0:frag_pos].to_string()
         }
         None => ()
       }
@@ -282,8 +282,8 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
       // 然后提取 query（最后的 ?）
       match find_char(remaining, '?') {
         Some(query_pos) => {
-          query = Some(remaining.substring(start=query_pos + 1))
-          remaining = remaining.substring(start=0, end=query_pos)
+          query = Some(try! remaining[query_pos + 1:].to_string())
+          remaining = try! remaining[0:query_pos].to_string()
         }
         None => ()
       }
@@ -307,14 +307,14 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   // 检查 userinfo
   match find_char(remaining, '@') {
     Some(pos) => {
-      let userinfo_part = remaining.substring(start=0, end=pos)
+      let userinfo_part = try! remaining[0:pos].to_string()
       // 验证userinfo格式
       if not(is_valid_userinfo(userinfo_part)) {
         return Err(InvalidUserinfo("Invalid userinfo format: " + userinfo_part))
       }
       // 保留原样（包括仅":" 的情况），以便与 non-special://:@test/x 一致
       userinfo = Some(userinfo_part)
-      remaining = remaining.substring(start=pos + 1)
+      remaining = try! remaining[pos + 1:].to_string()
     }
     None => ()
   }
@@ -323,14 +323,14 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   if has_prefix(remaining, "[") {
     match find_char(remaining, ']') {
       Some(pos) => {
-        let ipv6_part = remaining.substring(start=1, end=pos) // 去掉方括号
+        let ipv6_part = try! remaining[1:pos].to_string() // 去掉方括号
         if not(is_valid_ipv6(ipv6_part)) {
           return Err(
             InvalidIPv6Address("Invalid IPv6 address format: " + ipv6_part),
           )
         }
-        host = remaining.substring(start=0, end=pos + 1)
-        remaining = remaining.substring(start=pos + 1)
+        host = try! remaining[0:pos + 1].to_string()
+        remaining = try! remaining[pos + 1:].to_string()
       }
       None =>
         return Err(
@@ -341,8 +341,8 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
     // 普通 host，查找 port 分隔符
     match find_char(remaining, ':') {
       Some(pos) => {
-        host = remaining.substring(start=0, end=pos)
-        remaining = remaining.substring(start=pos + 1)
+        host = try! remaining[0:pos].to_string()
+        remaining = try! remaining[pos + 1:].to_string()
       }
       None => {
         host = remaining
@@ -355,7 +355,7 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   if remaining.length() > 0 {
     // 兼容两种分支：非IPv6分支已消费冒号、IPv6分支保留冒号
     let port_str = if has_prefix(remaining, ":") {
-      remaining.substring(start=1)
+      try! remaining[1:].to_string()
     } else {
       remaining
     }
@@ -587,7 +587,7 @@ pub fn Uri::file_extension(self : Uri) -> String? {
       match filename.rev_find(".") {
         Some(index) =>
           if index < filename.length() - 1 {
-            Some(filename.substring(start=index + 1))
+            Some(try! filename[index + 1:].to_string())
           } else {
             None
           }
@@ -609,7 +609,7 @@ pub fn Uri::parent_path(self : Uri) -> String {
     return "/"
   }
   let trimmed = if self.path.has_suffix("/") {
-    self.path.substring(start=0, end=self.path.length() - 1)
+    try! self.path[0:self.path.length() - 1].to_string()
   } else {
     self.path
   }
@@ -618,7 +618,7 @@ pub fn Uri::parent_path(self : Uri) -> String {
       if index == 0 {
         "/"
       } else {
-        trimmed.substring(start=0, end=index)
+        try! trimmed[0:index].to_string()
       }
     None => ""
   }
@@ -816,7 +816,7 @@ fn strip_trailing_dot(host : String) -> String {
     return host
   }
   if host.has_suffix(".") {
-    host.substring(start=0, end=host.length() - 1)
+    try! host[0:host.length() - 1].to_string()
   } else {
     host
   }
@@ -987,7 +987,7 @@ pub fn domain_to_unicode(domain : String) -> String {
       continue
     }
     if has_prefix(lower, "xn--") {
-      let puny = lower.substring(start=4)
+      let puny = try! lower[4:].to_string()
       match punycode_decode_strict(puny) {
         Some(decoded) => {
           // 可选：对解码后的标签应用 TR46+NFKC 以获得规范化视图
@@ -1922,15 +1922,15 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
   }
   match find_char(host_with_brackets, ']') {
     Some(end_idx) => {
-      let inside = host_with_brackets.substring(start=1, end=end_idx)
+      let inside = try! host_with_brackets[1:end_idx].to_string()
       // 保留可能的 zone-id（%25...）
       let mut core = inside
       let mut zone = ""
       if inside.contains("%") {
         match find_substring(inside, "%25") {
           Some(idx) => {
-            core = inside.substring(start=0, end=idx)
-            zone = inside.substring(start=idx) // 包含 %25...
+            core = try! inside[0:idx].to_string()
+            zone = try! inside[idx:].to_string() // 包含 %25...
           }
           None => return host_with_brackets
         }
@@ -1950,7 +1950,7 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
           let trimmed = if j == seg.length() {
             "0"
           } else {
-            seg.substring(start=j)
+            try! seg[j:].to_string()
           }
           cleaned.push(to_lowercase(trimmed))
         }
@@ -2110,7 +2110,7 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
     match find_substring(ipv6, "%25") {
       Some(idx) =>
         // zone-id 可以为空或包含更多 pct-encoded/未编码的合法标识字符，这里仅对核心地址做校验
-        core = ipv6.substring(start=0, end=idx)
+        core = try! ipv6[0:idx].to_string()
       None => return false // 存在%但不是%25则非法
     }
   }
@@ -2212,11 +2212,11 @@ fn split_ipv6_segments(ipv6 : String) -> Array[String] {
 fn validate_ipv4_mapped_ipv6(ipv6 : String) -> Bool {
   // ::ffff:192.0.2.1 格式
   if has_prefix(ipv6, "::ffff:") {
-    let ipv4_part = ipv6.substring(start=7)
+    let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }
   if has_prefix(ipv6, "::FFFF:") {
-    let ipv4_part = ipv6.substring(start=7)
+    let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }
   false

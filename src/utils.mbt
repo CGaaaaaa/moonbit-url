@@ -72,30 +72,6 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
 }
 
 ///|
-/// 在字符串中查找子串位置
-pub fn find_substring(s : String, sub : String) -> Int? {
-  if is_empty(sub) {
-    return Some(0)
-  }
-  if sub.length() > s.length() {
-    return None
-  }
-  for i = 0; i <= s.length() - sub.length(); i = i + 1 {
-    let mut match_found = true
-    for j = 0; j < sub.length(); j = j + 1 {
-      if s[i + j] != sub[j] {
-        match_found = false
-        break
-      }
-    }
-    if match_found {
-      return Some(i)
-    }
-  }
-  None
-}
-
-///|
 /// 验证字符是否为十六进制
 pub fn is_hex_char(c : Char) -> Bool {
   (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')

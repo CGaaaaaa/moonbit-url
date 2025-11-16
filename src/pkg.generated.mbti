@@ -20,8 +20,6 @@ fn domain_to_unicode(String) -> String
 
 fn encode_query_param(String) -> String
 
-fn find_substring(String, String) -> Int?
-
 fn get_default_port(String) -> Int?
 
 fn hex_char_to_int(Char) -> Int?

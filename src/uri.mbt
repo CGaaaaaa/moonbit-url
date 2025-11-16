@@ -231,7 +231,7 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
 
   // RFC 3986 推荐的解析顺序：先解析 scheme，再解析其他组件
   // 首先找到 scheme 分隔符
-  match find_substring(input, ":") {
+  match input.find(":") {
     Some(scheme_pos) => {
       let scheme = try! input[0:scheme_pos].to_string()
       if not(is_valid_scheme(scheme)) {
@@ -1927,7 +1927,7 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
       let mut core = inside
       let mut zone = ""
       if inside.contains("%") {
-        match find_substring(inside, "%25") {
+        match inside.find("%") {
           Some(idx) => {
             core = try! inside[0:idx].to_string()
             zone = try! inside[idx:].to_string() // 包含 %25...
@@ -2107,7 +2107,7 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
   // 允许 RFC 6874 zone-id：形如 "%25zone"，仅校验百分号序列并在校验时忽略zone部分
   let mut core = ipv6
   if ipv6.contains("%") {
-    match find_substring(ipv6, "%25") {
+    match ipv6.find("%25") {
       Some(idx) =>
         // zone-id 可以为空或包含更多 pct-encoded/未编码的合法标识字符，这里仅对核心地址做校验
         core = try! ipv6[0:idx].to_string()

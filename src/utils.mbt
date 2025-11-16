@@ -2,24 +2,6 @@
 /// 集中管理重复使用的字符串处理、数组操作等工具函数
 
 ///|
-/// 分割字符串
-pub fn split_string(s : String, delimiter : Char) -> Array[String] {
-  let parts : Array[String] = []
-  let mut current = ""
-  for i = 0; i < s.length(); i = i + 1 {
-    let char_code = s[i]
-    if char_code == Char::to_int(delimiter) {
-      parts.push(current)
-      current = ""
-    } else {
-      current = current + Char::to_string(Int::unsafe_to_char(char_code))
-    }
-  }
-  parts.push(current)
-  parts
-}
-
-///|
 /// 查找字符位置
 pub fn find_char(s : String, c : Char) -> Int? {
   for i = 0; i < s.length(); i = i + 1 {
@@ -86,15 +68,15 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
     return []
   }
   let params : Array[(String, String)] = []
-  let pairs = split_string(query, '&')
+  let pairs = query.split("&")
   for pair in pairs {
-    match find_char(pair, '=') {
+    match pair.find("=") {
       Some(pos) => {
         let key = try! pair[0:pos].to_string()
         let value = try! pair[pos + 1:].to_string()
         params.push((key, value))
       }
-      None => params.push((pair, ""))
+      None => params.push((pair.to_string(), ""))
     }
   }
   params

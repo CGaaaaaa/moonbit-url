@@ -70,8 +70,6 @@ fn remove_dot_segments(String) -> String
 
 fn resolve_reference(Uri, Uri) -> Result[Uri, UriError]
 
-fn split_string(String, Char) -> Array[String]
-
 fn to_lowercase(String) -> String
 
 fn validate_and_decode_percent_encoded(String) -> Result[String, UriError]

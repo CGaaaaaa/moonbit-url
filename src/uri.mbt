@@ -796,11 +796,11 @@ fn collapse_host_dots(host : String) -> String {
   if has_prefix(host, "[") {
     return host
   }
-  let labels = split_string(host, '.')
+  let labels = host.split(".")
   let filtered : Array[String] = []
   for l in labels {
     if l.length() > 0 {
-      filtered.push(l)
+      filtered.push(l.to_string())
     }
   }
   filtered.join(".")
@@ -845,10 +845,10 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
     return host
   } // IPv6
   let preprocessed = map_alt_dots(host)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = to_lowercase(raw_label.to_string())
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -909,10 +909,10 @@ fn normalize_host_with_profile_strict(
     return Some(host)
   } // IPv6
   let preprocessed = map_alt_dots(host)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = to_lowercase(raw_label.to_string())
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -978,10 +978,10 @@ pub fn domain_to_unicode(domain : String) -> String {
     return domain
   }
   let preprocessed = map_alt_dots(domain)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = to_lowercase(raw_label.to_string())
     if lower.length() == 0 {
       out_labels.push("")
       continue
@@ -2225,12 +2225,12 @@ fn validate_ipv4_mapped_ipv6(ipv6 : String) -> Bool {
 ///|
 /// 验证IPv4地址格式
 fn is_valid_ipv4(ipv4 : String) -> Bool {
-  let parts = split_string(ipv4, '.')
+  let parts = ipv4.split(".").to_array()
   if parts.length() != 4 {
     return false
   }
   for part in parts {
-    match parse_int(part) {
+    match parse_int(part.to_string()) {
       Some(num) => {
         if num < 0 || num > 255 {
           return false

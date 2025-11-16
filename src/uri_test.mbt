@@ -1,4 +1,5 @@
-///| URI 测试套件
+///|
+/// URI 测试套件
 test "parse_simple_http" {
   match Uri::parse("http://example.com/path") {
     Ok(uri) => {
@@ -16,7 +17,8 @@ test "parse_simple_http" {
   }
 }
 
-///| rust-url 行为对齐的补充测试集
+///|
+/// rust-url 行为对齐的补充测试集
 test "rust_url_additional_compat_tests" {
   // 1) 查询编码策略对齐：Percent 与 FormUrlencoded
   match
@@ -4369,7 +4371,8 @@ test "percent_encoding_comprehensive_edge_cases" {
   }
 }
 
-///| 边界情况和兼容性测试
+///|
+/// 边界情况和兼容性测试
 test "boundary_cases_and_compatibility" {
   // 测试非标准协议的userinfo边界情况（类似rust-url的测试用例）
   match Uri::parse("non-special://:@test/x") {
@@ -4507,7 +4510,8 @@ test "boundary_cases_and_compatibility" {
   }
 }
 
-///| 错误处理测试
+///|
+/// 错误处理测试
 test "enhanced_error_handling" {
   // 测试新的错误类型
   match Uri::parse("http://[invalid-ipv6]/") {
@@ -4541,7 +4545,8 @@ test "enhanced_error_handling" {
   }
 }
 
-///| 测试rust-url兼容的特殊案例
+///|
+/// 测试rust-url兼容的特殊案例
 test "rust_url_compatibility_cases" {
   // 测试 "non-special://:@test/x" 这种特殊格式
   match Uri::parse("non-special://:@test/x") {
@@ -4588,7 +4593,8 @@ test "rust_url_compatibility_cases" {
   }
 }
 
-///| RFC 3986标准相对引用解析测试 - 基于官方测试案例
+///|
+/// RFC 3986标准相对引用解析测试 - 基于官方测试案例
 test "rfc3986_relative_reference_standard_tests" {
   // 基URI: http://a/b/c/d;p?q
   let base_uri = "http://a/b/c/d;p?q"
@@ -4631,7 +4637,8 @@ test "rfc3986_relative_reference_standard_tests" {
   }
 }
 
-///| 百分号编码UTF-8转换测试
+///|
+/// 百分号编码UTF-8转换测试
 test "percent_encoding_utf8_conversion" {
   // 测试中文字符编码（使用标准UTF-8编码函数）
   let chinese_text = "测试"
@@ -4704,7 +4711,8 @@ test "percent_encoding_utf8_conversion" {
   )
 }
 
-///| 百分号编码解码往返测试
+///|
+/// 百分号编码解码往返测试
 test "percent_encoding_decode_roundtrip" {
   // 测试编码解码往返
   let test_strings = [
@@ -4724,7 +4732,8 @@ test "percent_encoding_decode_roundtrip" {
   }
 }
 
-///| ASCII字符编码测试
+///|
+/// ASCII字符编码测试
 test "ascii_characters_encoding" {
   // 测试ASCII字符编码
   let ascii_string = "Hello World 123 !@#$%^&*()"
@@ -4739,7 +4748,8 @@ test "ascii_characters_encoding" {
   assert_eq(special_encoded, "hello+world%2Btest%26value%3Ddata")
 }
 
-///| 用户提供的百分号编码测试样例
+///|
+/// 用户提供的百分号编码测试样例
 test "user_provided_encoding_test" {
   // 测试中文字符编码
   let chinese_text = "测试"

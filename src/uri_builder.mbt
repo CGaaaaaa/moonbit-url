@@ -1,12 +1,14 @@
 /// 高级 URI 构造器
 
-///| 查询参数编码方式
+///|
+/// 查询参数编码方式
 pub enum QueryEncoding {
   Percent
   FormUrlencoded
 }
 
-///| 构建器配置选项
+///|
+/// 构建器配置选项
 pub struct BuilderOptions {
   query_encoding : QueryEncoding
   normalize_path : Bool
@@ -26,7 +28,8 @@ pub struct UriBuilder {
   options : BuilderOptions
 }
 
-///| 默认构建器选项
+///|
+/// 默认构建器选项
 pub fn default_builder_options() -> BuilderOptions {
   {
     query_encoding: QueryEncoding::Percent,
@@ -36,7 +39,8 @@ pub fn default_builder_options() -> BuilderOptions {
   }
 }
 
-///| 创建新的URI构建器
+///|
+/// 创建新的URI构建器
 pub fn UriBuilder::new() -> UriBuilder {
   {
     scheme: None,
@@ -50,7 +54,8 @@ pub fn UriBuilder::new() -> UriBuilder {
   }
 }
 
-///| 使用自定义选项创建URI构建器
+///|
+/// 使用自定义选项创建URI构建器
 pub fn UriBuilder::with_options(options : BuilderOptions) -> UriBuilder {
   {
     scheme: None,
@@ -64,7 +69,8 @@ pub fn UriBuilder::with_options(options : BuilderOptions) -> UriBuilder {
   }
 }
 
-///| 设置查询参数编码策略
+///|
+/// 设置查询参数编码策略
 pub fn UriBuilder::query_encoding(
   self : UriBuilder,
   encoding : QueryEncoding,
@@ -72,39 +78,46 @@ pub fn UriBuilder::query_encoding(
   { ..self, options: { ..self.options, query_encoding: encoding } }
 }
 
-///| 使用 Percent 编码策略（空格->%20）
+///|
+/// 使用 Percent 编码策略（空格->%20）
 pub fn UriBuilder::use_percent_query_encoding(self : UriBuilder) -> UriBuilder {
   self.query_encoding(QueryEncoding::Percent)
 }
 
-///| 使用 application/x-www-form-urlencoded 编码策略（空格->+）
+///|
+/// 使用 application/x-www-form-urlencoded 编码策略（空格->+）
 pub fn UriBuilder::use_form_urlencoded_query_encoding(
   self : UriBuilder,
 ) -> UriBuilder {
   self.query_encoding(QueryEncoding::FormUrlencoded)
 }
 
-///| 设置URI方案
+///|
+/// 设置URI方案
 pub fn UriBuilder::scheme(self : UriBuilder, scheme : String) -> UriBuilder {
   { ..self, scheme: Some(scheme) }
 }
 
-///| 设置主机名
+///|
+/// 设置主机名
 pub fn UriBuilder::host(self : UriBuilder, host : String) -> UriBuilder {
   { ..self, host: Some(host) }
 }
 
-///| 设置端口号
+///|
+/// 设置端口号
 pub fn UriBuilder::port(self : UriBuilder, port : Int) -> UriBuilder {
   { ..self, port: Some(port) }
 }
 
-///| 设置用户信息
+///|
+/// 设置用户信息
 pub fn UriBuilder::userinfo(self : UriBuilder, userinfo : String) -> UriBuilder {
   { ..self, userinfo: Some(userinfo) }
 }
 
-///| 设置用户名和密码
+///|
+/// 设置用户名和密码
 pub fn UriBuilder::credentials(
   self : UriBuilder,
   username : String,
@@ -114,18 +127,21 @@ pub fn UriBuilder::credentials(
   { ..self, userinfo: Some(userinfo) }
 }
 
-///| 设置片段
+///|
+/// 设置片段
 pub fn UriBuilder::fragment(self : UriBuilder, fragment : String) -> UriBuilder {
   { ..self, fragment: Some(fragment) }
 }
 
-///| 设置完整路径
+///|
+/// 设置完整路径
 pub fn UriBuilder::path(self : UriBuilder, path : String) -> UriBuilder {
   let segments = parse_path_segments(path)
   { ..self, path_segments: segments }
 }
 
-///| 添加路径段
+///|
+/// 添加路径段
 pub fn UriBuilder::path_segment(
   self : UriBuilder,
   segment : String,
@@ -134,7 +150,8 @@ pub fn UriBuilder::path_segment(
   self
 }
 
-///| 添加多个路径段
+///|
+/// 添加多个路径段
 pub fn UriBuilder::path_segments(
   self : UriBuilder,
   segments : Array[String],
@@ -145,12 +162,14 @@ pub fn UriBuilder::path_segments(
   self
 }
 
-///| 清除所有路径段
+///|
+/// 清除所有路径段
 pub fn UriBuilder::clear_path(self : UriBuilder) -> UriBuilder {
   { ..self, path_segments: [] }
 }
 
-///| 添加查询参数
+///|
+/// 添加查询参数
 pub fn UriBuilder::query_param(
   self : UriBuilder,
   key : String,
@@ -160,7 +179,8 @@ pub fn UriBuilder::query_param(
   self
 }
 
-///| 添加布尔查询参数（仅当值为true时）
+///|
+/// 添加布尔查询参数（仅当值为true时）
 pub fn UriBuilder::query_param_bool(
   self : UriBuilder,
   key : String,
@@ -172,7 +192,8 @@ pub fn UriBuilder::query_param_bool(
   self
 }
 
-///| 添加多个查询参数
+///|
+/// 添加多个查询参数
 pub fn UriBuilder::query_params(
   self : UriBuilder,
   params : Array[(String, String)],
@@ -183,7 +204,8 @@ pub fn UriBuilder::query_params(
   self
 }
 
-///| 添加查询参数（仅当值不为空时）
+///|
+/// 添加查询参数（仅当值不为空时）
 pub fn UriBuilder::query_param_if_not_empty(
   self : UriBuilder,
   key : String,
@@ -195,7 +217,8 @@ pub fn UriBuilder::query_param_if_not_empty(
   self
 }
 
-///| 移除指定的查询参数
+///|
+/// 移除指定的查询参数
 pub fn UriBuilder::remove_query_param(
   self : UriBuilder,
   key : String,
@@ -209,12 +232,14 @@ pub fn UriBuilder::remove_query_param(
   { ..self, query_params: filtered_params }
 }
 
-///| 清除所有查询参数
+///|
+/// 清除所有查询参数
 pub fn UriBuilder::clear_query_params(self : UriBuilder) -> UriBuilder {
   { ..self, query_params: [] }
 }
 
-///| 构建URI
+///|
+/// 构建URI
 pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
   let scheme = match self.scheme {
     Some(s) => {
@@ -254,7 +279,8 @@ pub fn UriBuilder::build(self : UriBuilder) -> Result[Uri, UriError] {
   Ok(uri)
 }
 
-///| 构建URI并返回字符串
+///|
+/// 构建URI并返回字符串
 pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
   match self.build() {
     Ok(uri) => Ok(uri.to_string())
@@ -262,7 +288,8 @@ pub fn UriBuilder::build_string(self : UriBuilder) -> Result[String, UriError] {
   }
 }
 
-///| 使用给定规范化选项构建并规范化 URI
+///|
+/// 使用给定规范化选项构建并规范化 URI
 pub fn UriBuilder::build_normalized_with(
   self : UriBuilder,
   options : NormalizationOptions,
@@ -273,12 +300,14 @@ pub fn UriBuilder::build_normalized_with(
   }
 }
 
-///| 使用 Web 兼容预设构建并规范化 URI（UTS-46 非过渡等）
+///|
+/// 使用 Web 兼容预设构建并规范化 URI（UTS-46 非过渡等）
 pub fn UriBuilder::build_web(self : UriBuilder) -> Result[Uri, UriError] {
   self.build_normalized_with(NormalizationOptions::web_compat())
 }
 
-///| 克隆构建器
+///|
+/// 克隆构建器
 pub fn UriBuilder::clone(self : UriBuilder) -> UriBuilder {
   {
     scheme: self.scheme,
@@ -292,7 +321,8 @@ pub fn UriBuilder::clone(self : UriBuilder) -> UriBuilder {
   }
 }
 
-///| 从现有URI创建构建器
+///|
+/// 从现有URI创建构建器
 pub fn UriBuilder::from_uri(uri : Uri) -> UriBuilder {
   let mut builder = UriBuilder::new().scheme(uri.scheme)
   match uri.authority {
@@ -326,7 +356,8 @@ pub fn UriBuilder::from_uri(uri : Uri) -> UriBuilder {
   builder
 }
 
-///| 从URI字符串创建构建器
+///|
+/// 从URI字符串创建构建器
 pub fn UriBuilder::from_string(
   uri_str : String,
 ) -> Result[UriBuilder, UriError] {
@@ -336,7 +367,8 @@ pub fn UriBuilder::from_string(
   }
 }
 
-///| 通用URL构建器创建函数
+///|
+/// 通用URL构建器创建函数
 fn create_url_builder(
   scheme : String,
   host : String?,
@@ -353,19 +385,22 @@ fn create_url_builder(
   builder
 }
 
-///| 创建HTTP URL构建器
+///|
+/// 创建HTTP URL构建器
 pub fn http_url(host : String, path : String) -> UriBuilder {
   create_url_builder("http", Some(host), path)
 }
 
-///| 创建HTTPS URL构建器
+///|
+/// 创建HTTPS URL构建器
 pub fn https_url(host : String, path : String) -> UriBuilder {
   create_url_builder("https", Some(host), path)
 }
 
 // ==================== 辅助函数 ====================
 
-///| 解析路径段
+///|
+/// 解析路径段
 fn parse_path_segments(path : String) -> Array[String] {
   if path.length() == 0 {
     return [""] // 使用特殊标记表示显式的空路径
@@ -395,7 +430,8 @@ fn parse_path_segments(path : String) -> Array[String] {
   segments
 }
 
-///| 统一的路径构建函数
+///|
+/// 统一的路径构建函数
 fn build_path_unified(
   segments : Array[String],
   scheme : String,
@@ -440,7 +476,8 @@ fn build_path_unified(
   }
 }
 
-///| 根据策略构建查询字符串（对键和值进行编码）
+///|
+/// 根据策略构建查询字符串（对键和值进行编码）
 fn build_query_string_with_encoding(
   params : Array[(String, String)],
   encoding : QueryEncoding,
@@ -467,28 +504,33 @@ fn build_query_string_with_encoding(
 
 // ==================== 性能优化 ====================
 
-///| 字符串构建器 - 用于优化字符串拼接性能
+///|
+/// 字符串构建器 - 用于优化字符串拼接性能
 pub struct StringBuilder {
   parts : Array[String]
 }
 
-///| 创建新的字符串构建器
+///|
+/// 创建新的字符串构建器
 pub fn StringBuilder::new() -> StringBuilder {
   { parts: [] }
 }
 
-///| 添加字符串片段
+///|
+/// 添加字符串片段
 pub fn StringBuilder::append(self : StringBuilder, s : String) -> StringBuilder {
   self.parts.push(s)
   self
 }
 
-///| 构建最终字符串
+///|
+/// 构建最终字符串
 pub fn StringBuilder::build(self : StringBuilder) -> String {
   self.parts.join("")
 }
 
-///| 获取当前长度
+///|
+/// 获取当前长度
 pub fn StringBuilder::length(self : StringBuilder) -> Int {
   let mut total = 0
   for part in self.parts {
@@ -497,18 +539,21 @@ pub fn StringBuilder::length(self : StringBuilder) -> Int {
   total
 }
 
-///| 编码缓存 - 避免重复编码相同的字符串
+///|
+/// 编码缓存 - 避免重复编码相同的字符串
 pub struct EncodingCache {
   percent_cache : Array[(String, String)]
   form_cache : Array[(String, String)]
 }
 
-///| 创建新的编码缓存
+///|
+/// 创建新的编码缓存
 pub fn EncodingCache::new() -> EncodingCache {
   { percent_cache: [], form_cache: [] }
 }
 
-///| 获取缓存的编码结果
+///|
+/// 获取缓存的编码结果
 pub fn EncodingCache::get_cached_encoding(
   self : EncodingCache,
   input : String,
@@ -527,7 +572,8 @@ pub fn EncodingCache::get_cached_encoding(
   None
 }
 
-///| 缓存编码结果
+///|
+/// 缓存编码结果
 pub fn EncodingCache::cache_encoding(
   self : EncodingCache,
   input : String,

@@ -1,7 +1,8 @@
 ///| 测试修复的边界情况
 /// 这个文件包含针对我们修复的问题的特定测试用例
 
-///| 测试百分号解码边界条件修复
+///|
+/// 测试百分号解码边界条件修复
 test "percent_decode_boundary_fix" {
   // 测试百分号解码的边界条件修复：确保字符串末尾的百分号编码被正确处理
   match Uri::parse("http://example.com/test%41") {
@@ -28,7 +29,8 @@ test "percent_decode_boundary_fix" {
   }
 }
 
-///| 测试URI解析顺序修复
+///|
+/// 测试URI解析顺序修复
 test "parsing_order_fix" {
   // 测试包含特殊字符的复杂URI，确保解析顺序正确
   match
@@ -97,7 +99,8 @@ test "parsing_order_fix" {
   }
 }
 
-///| 测试增强的scheme验证
+///|
+/// 测试增强的scheme验证
 test "enhanced_scheme_validation" {
   // 测试过长的scheme会被拒绝
   let long_scheme = "a".repeat(65) + "://example.com"
@@ -146,7 +149,8 @@ test "enhanced_scheme_validation" {
   }
 }
 
-///| 测试authority解析的边界情况
+///|
+/// 测试authority解析的边界情况
 test "authority_boundary_cases" {
   // 测试authority组件边界的正确检测（修复后应该能正确处理）
   match Uri::parse("scheme://host:9000/path") {

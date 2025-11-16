@@ -1,6 +1,7 @@
 /// 简化的 URI 引用解析实现
 
-///| 获取路径的父目录
+///|
+/// 获取路径的父目录
 fn get_parent_path(path : String) -> String {
   let mut last_slash = -1
   for i = path.length() - 1; i >= 0; i = i - 1 {
@@ -20,7 +21,8 @@ fn get_parent_path(path : String) -> String {
 
 // 使用通用工具函数：`utils.mbt` 中的 `is_alpha_char` 与 `is_alphanumeric_char`
 
-///| 校验scheme语法是否有效: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+///|
+/// 校验scheme语法是否有效: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 fn is_valid_scheme_syntax(scheme : String) -> Bool {
   if scheme.is_empty() {
     return false
@@ -38,7 +40,8 @@ fn is_valid_scheme_syntax(scheme : String) -> Bool {
   true
 }
 
-///| 严格判定字符串是否为绝对URI语法（基于RFC 3986）
+///|
+/// 严格判定字符串是否为绝对URI语法（基于RFC 3986）
 fn has_absolute_uri_syntax(reference : String) -> Bool {
   match reference.find(":") {
     Some(colon_pos) => {
@@ -72,7 +75,8 @@ fn has_absolute_uri_syntax(reference : String) -> Bool {
   }
 }
 
-///| 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
+///|
+/// 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
 pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   // 验证基URI必须是绝对的
   if not(base.is_absolute()) {
@@ -129,7 +133,8 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   })
 }
 
-///| 合并路径（RFC 3986 Section 5.2.3）
+///|
+/// 合并路径（RFC 3986 Section 5.2.3）
 fn merge_paths(base : Uri, path : String) -> String {
   if base.authority is Some(_) && is_empty(base.path) {
     "/" + path
@@ -145,7 +150,8 @@ fn merge_paths(base : Uri, path : String) -> String {
   }
 }
 
-///| 移除路径中的点段（RFC 3986标准实现）
+///|
+/// 移除路径中的点段（RFC 3986标准实现）
 pub fn remove_dot_segments(path : String) -> String {
   if path.is_empty() {
     return ""
@@ -225,7 +231,8 @@ pub fn remove_dot_segments(path : String) -> String {
   output
 }
 
-///| 移除输出路径中的最后一个段
+///|
+/// 移除输出路径中的最后一个段
 fn remove_last_segment(path : String) -> String {
   if path.is_empty() {
     return ""
@@ -249,7 +256,8 @@ fn remove_last_segment(path : String) -> String {
   }
 }
 
-///| URI连接工具
+///|
+/// URI连接工具
 pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
   // 检查基URI是否包含无效模式
   if base.contains(":::") {
@@ -345,7 +353,8 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
   }
 }
 
-///| 检查URI是否为另一个URI的子路径
+///|
+/// 检查URI是否为另一个URI的子路径
 pub fn is_subpath(parent : Uri, child : Uri) -> Bool {
   // 检查scheme和authority是否相同
   if parent.scheme != child.scheme {
@@ -364,7 +373,8 @@ pub fn is_subpath(parent : Uri, child : Uri) -> Bool {
   child.path.has_prefix(parent.path)
 }
 
-///| 引用解析器
+///|
+/// 引用解析器
 pub struct ReferenceResolver {
   base : Uri
 }

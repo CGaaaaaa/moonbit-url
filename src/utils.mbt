@@ -1,7 +1,8 @@
 /// 通用工具函数模块
 /// 集中管理重复使用的字符串处理、数组操作等工具函数
 
-///| 分割字符串
+///|
+/// 分割字符串
 pub fn split_string(s : String, delimiter : Char) -> Array[String] {
   let parts : Array[String] = []
   let mut current = ""
@@ -18,7 +19,8 @@ pub fn split_string(s : String, delimiter : Char) -> Array[String] {
   parts
 }
 
-///| 查找字符位置
+///|
+/// 查找字符位置
 pub fn find_char(s : String, c : Char) -> Int? {
   for i = 0; i < s.length(); i = i + 1 {
     if s[i] == Char::to_int(c) {
@@ -28,7 +30,8 @@ pub fn find_char(s : String, c : Char) -> Int? {
   None
 }
 
-///| 简单的整数解析
+///|
+/// 简单的整数解析
 pub fn parse_int(s : String) -> Int? {
   if is_empty(s) {
     return None
@@ -45,7 +48,8 @@ pub fn parse_int(s : String) -> Int? {
   Some(result)
 }
 
-///| 将字节转换为十六进制字符串
+///|
+/// 将字节转换为十六进制字符串
 pub fn byte_to_hex(byte : Int) -> String {
   let hex_chars = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
@@ -58,7 +62,8 @@ pub fn byte_to_hex(byte : Int) -> String {
   Char::to_string(high) + Char::to_string(low)
 }
 
-///| 十六进制字符转数字
+///|
+/// 十六进制字符转数字
 pub fn hex_char_to_int(c : Char) -> Int? {
   let code = Char::to_int(c)
   if code >= '0' && code <= '9' {
@@ -74,7 +79,8 @@ pub fn hex_char_to_int(c : Char) -> Int? {
 
 // 删除: build_query_string 已不再使用，构造器根据编码策略自行处理
 
-///| 解析查询字符串
+///|
+/// 解析查询字符串
 pub fn parse_query_string(query : String) -> Array[(String, String)] {
   if is_empty(query) {
     return []
@@ -94,7 +100,8 @@ pub fn parse_query_string(query : String) -> Array[(String, String)] {
   params
 }
 
-///| 检查字符串是否有指定前缀
+///|
+/// 检查字符串是否有指定前缀
 pub fn has_prefix(s : String, prefix : String) -> Bool {
   if prefix.length() > s.length() {
     return false
@@ -107,7 +114,8 @@ pub fn has_prefix(s : String, prefix : String) -> Bool {
   true
 }
 
-///| 在字符串中查找子串位置
+///|
+/// 在字符串中查找子串位置
 pub fn find_substring(s : String, sub : String) -> Int? {
   if is_empty(sub) {
     return Some(0)
@@ -130,32 +138,38 @@ pub fn find_substring(s : String, sub : String) -> Int? {
   None
 }
 
-///| 验证字符是否为十六进制
+///|
+/// 验证字符是否为十六进制
 pub fn is_hex_char(c : Char) -> Bool {
   (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')
 }
 
-///| 检查字符是否为字母
+///|
+/// 检查字符是否为字母
 pub fn is_alpha_char(c : Char) -> Bool {
   (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
 }
 
-///| 检查字符是否为数字
+///|
+/// 检查字符是否为数字
 pub fn is_digit_char(c : Char) -> Bool {
   c >= '0' && c <= '9'
 }
 
-///| 检查字符是否为字母数字
+///|
+/// 检查字符是否为字母数字
 pub fn is_alphanumeric_char(c : Char) -> Bool {
   is_alpha_char(c) || is_digit_char(c)
 }
 
-///| 检查字符是否为unreserved字符（RFC 3986）
+///|
+/// 检查字符是否为unreserved字符（RFC 3986）
 pub fn is_unreserved_char(c : Char) -> Bool {
   is_alphanumeric_char(c) || c == '-' || c == '.' || c == '_' || c == '~'
 }
 
-///| 检查字符是否为sub-delims字符（RFC 3986）
+///|
+/// 检查字符是否为sub-delims字符（RFC 3986）
 pub fn is_sub_delim_char(c : Char) -> Bool {
   c == '!' ||
   c == '$' ||
@@ -170,7 +184,8 @@ pub fn is_sub_delim_char(c : Char) -> Bool {
   c == '='
 }
 
-///| 获取scheme的默认端口号
+///|
+/// 获取scheme的默认端口号
 pub fn get_default_port(scheme : String) -> Int? {
   let lower_scheme = to_lowercase(scheme)
   match lower_scheme {
@@ -193,17 +208,20 @@ pub fn get_default_port(scheme : String) -> Int? {
   }
 }
 
-///| 检查字符串是否为空（简化实现）
+///|
+/// 检查字符串是否为空（简化实现）
 pub fn is_empty(s : String) -> Bool {
   s.length() == 0
 }
 
-///| 检查字符串是否非空
+///|
+/// 检查字符串是否非空
 pub fn is_not_empty(s : String) -> Bool {
   s.length() > 0
 }
 
-///| 将字符串转换为小写
+///|
+/// 将字符串转换为小写
 pub fn to_lowercase(s : String) -> String {
   let mut result = ""
   for i = 0; i < s.length(); i = i + 1 {

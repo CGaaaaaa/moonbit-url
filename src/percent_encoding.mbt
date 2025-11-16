@@ -1,22 +1,26 @@
 /// 百分号编码实现（严格基于 UTF-8 字节）
 
-///| 编码集合类型
+///|
+/// 编码集合类型
 pub enum EncodeSet {
   Component
   Query
 } derive(Show, Eq)
 
-///| 创建Component编码集
+///|
+/// 创建Component编码集
 pub fn EncodeSet::component() -> EncodeSet {
   Component
 }
 
-///| 创建Query编码集
+///|
+/// 创建Query编码集
 pub fn EncodeSet::query() -> EncodeSet {
   Query
 }
 
-///| 百分号编码字符串（基于 UTF-8 字节视角按字节编码）
+///|
+/// 百分号编码字符串（基于 UTF-8 字节视角按字节编码）
 pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
   let mut result = ""
   let mut i = 0
@@ -85,7 +89,8 @@ pub fn percent_encode(input : String, encode_set : EncodeSet) -> String {
   result
 }
 
-///| 将 Unicode 码点以 UTF-8 形式编码为字节串（以 String 保存每个字节）
+///|
+/// 将 Unicode 码点以 UTF-8 形式编码为字节串（以 String 保存每个字节）
 fn utf8_encode_codepoint(codepoint : Int) -> String {
   // 不处理代理项范围（应不可能出现在有效的 Unicode 标量值中）
   if codepoint <= 0x7F {
@@ -120,7 +125,8 @@ fn utf8_encode_codepoint(codepoint : Int) -> String {
   }
 }
 
-///| 判断ASCII字符是否需要编码
+///|
+/// 判断ASCII字符是否需要编码
 fn should_percent_encode_byte(byte : Int, encode_set : EncodeSet) -> Bool {
   // unreserved: ALPHA / DIGIT / "-" / "." / "_" / "~"
   let is_alpha = (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
@@ -166,7 +172,8 @@ fn should_percent_encode_byte(byte : Int, encode_set : EncodeSet) -> Bool {
   }
 }
 
-///| 校验一个以字节视角表示的 String 是否为合法 UTF-8 序列
+///|
+/// 校验一个以字节视角表示的 String 是否为合法 UTF-8 序列
 fn is_valid_utf8_bytes(bytes : String) -> Bool {
   let mut i = 0
   while i < bytes.length() {
@@ -299,7 +306,8 @@ fn is_valid_utf8_bytes(bytes : String) -> Bool {
   true
 }
 
-///| 百分号解码字符串（严格按 UTF-8 返回；非法 UTF-8 报错）
+///|
+/// 百分号解码字符串（严格按 UTF-8 返回；非法 UTF-8 报错）
 pub fn percent_decode(input : String) -> Result[String, String] {
   let mut bytes = ""
   let mut i = 0
@@ -329,7 +337,8 @@ pub fn percent_decode(input : String) -> Result[String, String] {
   }
 }
 
-///| 将按字节存储的 String 按 UTF-8 解码为 Unicode 字符串
+///|
+/// 将按字节存储的 String 按 UTF-8 解码为 Unicode 字符串
 fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
   if !is_valid_utf8_bytes(bytes) {
     return Err("Invalid UTF-8 sequence after percent-decoding")
@@ -416,7 +425,8 @@ fn utf8_decode_bytes(bytes : String) -> Result[String, String] {
   Ok(out)
 }
 
-///| 编码URL查询参数（application/x-www-form-urlencoded：空格->+，其他字符UTF-8编码）
+///|
+/// 编码URL查询参数（application/x-www-form-urlencoded：空格->+，其他字符UTF-8编码）
 pub fn encode_query_param(input : String) -> String {
   let mut result = ""
   let mut i = 0
@@ -498,7 +508,8 @@ pub fn encode_query_param(input : String) -> String {
   result
 }
 
-///| 解码URL查询参数（application/x-www-form-urlencoded）
+///|
+/// 解码URL查询参数（application/x-www-form-urlencoded）
 pub fn decode_query_param(input : String) -> Result[String, String] {
   let mut converted = ""
   for i = 0; i < input.length(); i = i + 1 {
@@ -511,7 +522,8 @@ pub fn decode_query_param(input : String) -> Result[String, String] {
   percent_decode(converted)
 }
 
-///| 验证百分号编码的字符串是否有效
+///|
+/// 验证百分号编码的字符串是否有效
 pub fn validate_percent_encoded(input : String) -> Result[Unit, String] {
   let mut i = 0
   while i < input.length() {
@@ -540,7 +552,8 @@ pub fn validate_percent_encoded(input : String) -> Result[Unit, String] {
   Ok(())
 }
 
-///| 验证并解码百分号编码的字符串，使用UriError错误类型
+///|
+/// 验证并解码百分号编码的字符串，使用UriError错误类型
 pub fn validate_and_decode_percent_encoded(
   input : String,
 ) -> Result[String, UriError] {
@@ -589,7 +602,8 @@ pub fn validate_and_decode_percent_encoded(
   }
 }
 
-///| 仅对非 ASCII 字符进行百分号编码（保留 ASCII 原样）。
+///|
+/// 仅对非 ASCII 字符进行百分号编码（保留 ASCII 原样）。
 /// 用于 IRI -> URI 转换场景，避免对 '/'、':' 等 ASCII 保留字符误编码。
 pub fn percent_encode_non_ascii(input : String) -> String {
   let mut result = ""
@@ -652,7 +666,8 @@ pub fn percent_encode_non_ascii(input : String) -> String {
   result
 }
 
-///| 是否为 unreserved 字节（ALPHA / DIGIT / "-" / "." / "_" / "~"），按字节判断
+///|
+/// 是否为 unreserved 字节（ALPHA / DIGIT / "-" / "." / "_" / "~"），按字节判断
 pub fn is_unreserved_byte(byte : Int) -> Bool {
   let is_alpha = (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
   let is_digit = byte >= 48 && byte <= 57

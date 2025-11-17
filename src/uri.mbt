@@ -18,7 +18,7 @@ pub struct Authority {
   host : String
   /// 端口号，有效范围为0-65535
   port : Int?
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson)
 
 ///|
 /// 创建 Authority 实例
@@ -46,7 +46,7 @@ pub(all) struct Uri {
   query : String?
   /// 片段标识符
   fragment : String?
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson)
 
 ///|
 /// URI 解析和操作错误类型

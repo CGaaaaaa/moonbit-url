@@ -70,6 +70,7 @@ fn Authority::new(String?, String, Int?) -> Self
 fn Authority::to_string(Self) -> String
 impl Eq for Authority
 impl Show for Authority
+impl ToJson for Authority
 
 pub struct BuilderOptions {
   query_encoding : QueryEncoding
@@ -180,6 +181,7 @@ fn Uri::userinfo(Self) -> String?
 fn Uri::validate(Self) -> Result[Unit, UriError]
 impl Eq for Uri
 impl Show for Uri
+impl ToJson for Uri
 
 pub struct UriBuilder {
   scheme : String?

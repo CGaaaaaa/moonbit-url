@@ -15,7 +15,6 @@ test "advanced_builder_features" {
     .fragment("comments")
     .build() {
     Ok(uri) => {
-      println("Built URI: " + uri.to_string())
       assert_eq(uri.scheme, "https")
       assert_eq(uri.path, "/users/123/posts")
     }

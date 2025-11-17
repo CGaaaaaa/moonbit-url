@@ -367,8 +367,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       assert_eq(normalized.host(), Some("example.com"))
       assert_eq(normalized.path(), "/Path/With/Case")
     }
-    Err(e) =>
-      fail("Should lowercase host but keep path case: " + e.to_string())
+    Err(e) => fail("Should lowercase host but keep path case: " + e.to_string())
   }
 
   // 测试 normalize_with: 折叠重复斜杠
@@ -381,8 +380,7 @@ test "ipv6_zone_id_and_host_case_normalization" {
       let without_fold = uri.normalize()
       assert_eq(without_fold.path(), "//a///b////c")
     }
-    Err(e) =>
-      fail("Should parse path with duplicate slashes: " + e.to_string())
+    Err(e) => fail("Should parse path with duplicate slashes: " + e.to_string())
   }
 
   // 测试 normalize_with: IDNA 选项对 ASCII punycode 标签仅小写保留
@@ -2535,8 +2533,8 @@ test "rust_url_edge_cases" {
         None => fail("应该有authority部分")
       }
     }
-    Err(e) => println("解析 non-special://:@test/x 失败: " + e.to_string())
-    // 如果解析失败，说明当前实现有问题
+    Err(e) => fail("解析 non-special://:@test/x 失败: " + e.to_string())
+    // 如果解析失败，说明当前实现有问
   }
 
   // 测试其他边界情况
@@ -2548,7 +2546,7 @@ test "rust_url_edge_cases" {
     let (uri_str, expected_host) = case
     match Uri::parse(uri_str) {
       Ok(uri) => assert_eq(uri.host(), Some(expected_host))
-      Err(_) => println("解析失败: " + uri_str)
+      Err(_) => fail("解析失败: " + uri_str)
     }
   }
 }
@@ -2918,29 +2916,19 @@ test "rust_url_compatibility_cases" {
   // 测试 "non-special://:@test/x" 这种特殊格式
   match Uri::parse("non-special://:@test/x") {
     Ok(uri) => {
-      println("rust-url兼容测试:")
-      println("  scheme: " + uri.scheme())
-      let auth_str = match uri.authority {
-        Some(auth) => auth.to_string()
-        None => "None"
+      guard uri.authority is Some(auth) else {
+        fail("rust-url兼容测试失败: 应该有authority部分")
       }
-      println("  authority: " + auth_str)
-      println("  path: " + uri.path())
-
       // 验证解析结果
       assert_eq(uri.scheme(), "non-special")
-      match uri.authority {
-        Some(auth) => {
-          // 验证userinfo和host的处理
-          assert_eq(auth.userinfo, Some(":")) // 保留原样的":"
-          assert_eq(auth.host, "test") // host部分
-          assert_eq(auth.port, None) // 无端口
-        }
-        None => fail("Should have authority for this URI")
-      }
+
+      // 验证userinfo和host的处理
+      assert_eq(auth.userinfo, Some(":")) // 保留原样的":"
+      assert_eq(auth.host, "test") // host部分
+      assert_eq(auth.port, None) // 无端口
       assert_eq(uri.path(), "/x")
     }
-    Err(e) => println("rust-url兼容测试失败: " + e.to_string())
+    Err(e) => fail("rust-url兼容测试失败: " + e.to_string())
     // 这可能表示我们的解析器还不够兼容
   }
 
@@ -2954,8 +2942,8 @@ test "rust_url_compatibility_cases" {
   for case in edge_cases {
     match Uri::parse(case) {
       Ok(uri) =>
-        println("边界案例成功: " + case + " -> " + uri.to_string())
-      Err(e) => println("边界案例失败: " + case + " -> " + e.to_string())
+        assert_eq(uri.to_string(), case)
+      Err(e) => fail("边界案例失败: " + case + " -> " + e.to_string())
     }
   }
 }

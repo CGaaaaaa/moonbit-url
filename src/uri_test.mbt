@@ -2941,8 +2941,7 @@ test "rust_url_compatibility_cases" {
   ]
   for case in edge_cases {
     match Uri::parse(case) {
-      Ok(uri) =>
-        assert_eq(uri.to_string(), case)
+      Ok(uri) => assert_eq(uri.to_string(), case)
       Err(e) => fail("边界案例失败: " + case + " -> " + e.to_string())
     }
   }

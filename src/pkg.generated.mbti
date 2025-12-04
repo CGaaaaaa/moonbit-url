@@ -1,0 +1,240 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "consingliu/uri/src"
+
+// Values
+fn byte_to_hex(Int) -> String
+
+fn decode_query_param(String) -> Result[String, String]
+
+fn default_builder_options() -> BuilderOptions
+
+fn default_normalization_options() -> NormalizationOptions
+
+fn domain_to_ascii(String, IDNAProfile) -> String
+
+fn domain_to_ascii_strict(String) -> String?
+
+fn domain_to_ascii_strict_with_profile(String, IDNAProfile) -> String?
+
+fn domain_to_unicode(String) -> String
+
+fn encode_query_param(String) -> String
+
+fn get_default_port(String) -> Int?
+
+fn hex_char_to_int(Char) -> Int?
+
+fn http_url(String, String) -> UriBuilder
+
+fn https_url(String, String) -> UriBuilder
+
+fn is_alphanumeric_char(Char) -> Bool
+
+fn is_sub_delim_char(Char) -> Bool
+
+fn is_subpath(Uri, Uri) -> Bool
+
+fn is_unreserved_byte(Int) -> Bool
+
+fn is_unreserved_char(Char) -> Bool
+
+fn join_uri(String, String) -> Result[String, UriError]
+
+fn parse_int(String) -> Int?
+
+fn parse_query_string(String) -> Array[(String, String)]
+
+fn percent_decode(String) -> Result[String, String]
+
+fn percent_encode(String, EncodeSet) -> String
+
+fn percent_encode_non_ascii(String) -> String
+
+fn remove_dot_segments(String) -> String
+
+fn resolve_reference(Uri, Uri) -> Result[Uri, UriError]
+
+fn validate_and_decode_percent_encoded(String) -> Result[String, UriError]
+
+fn validate_percent_encoded(String) -> Result[Unit, String]
+
+// Errors
+
+// Types and methods
+pub struct Authority {
+  userinfo : String?
+  host : String
+  port : Int?
+}
+fn Authority::new(String?, String, Int?) -> Self
+fn Authority::to_string(Self) -> String
+impl Eq for Authority
+impl Show for Authority
+impl ToJson for Authority
+
+pub struct BuilderOptions {
+  query_encoding : QueryEncoding
+  normalize_path : Bool
+  validate : Bool
+  remove_default_ports : Bool
+}
+
+pub enum EncodeSet {
+  Component
+  Query
+}
+fn EncodeSet::component() -> Self
+fn EncodeSet::query() -> Self
+impl Eq for EncodeSet
+impl Show for EncodeSet
+
+pub struct EncodingCache {
+  percent_cache : Array[(String, String)]
+  form_cache : Array[(String, String)]
+}
+fn EncodingCache::cache_encoding(Self, String, String, QueryEncoding) -> Self
+fn EncodingCache::get_cached_encoding(Self, String, QueryEncoding) -> String?
+fn EncodingCache::new() -> Self
+
+pub enum IDNAProfile {
+  Uts46NonTransitional
+  Uts46Transitional
+  IDNA2008Strict
+}
+impl Eq for IDNAProfile
+impl Show for IDNAProfile
+
+pub struct NormalizationOptions {
+  fold_duplicate_slashes : Bool
+  enable_idna : Bool
+  percent_normalize : Bool
+  decode_unreserved_pct : Bool
+  ipv6_normalize : Bool
+  host_collapse_dots : Bool
+  host_strip_trailing_dot : Bool
+  idna_profile : IDNAProfile
+}
+fn NormalizationOptions::rfc3986_strict() -> Self
+fn NormalizationOptions::use_idna_2008_strict(Self) -> Self
+fn NormalizationOptions::use_idna_uts46_nontransitional(Self) -> Self
+fn NormalizationOptions::use_idna_uts46_transitional(Self) -> Self
+fn NormalizationOptions::web_compat() -> Self
+fn NormalizationOptions::with_decode_unreserved_pct(Self) -> Self
+fn NormalizationOptions::with_enable_idna(Self) -> Self
+fn NormalizationOptions::with_fold_duplicate_slashes(Self) -> Self
+fn NormalizationOptions::with_host_collapse_dots(Self) -> Self
+fn NormalizationOptions::with_host_strip_trailing_dot(Self) -> Self
+fn NormalizationOptions::with_ipv6_normalize(Self) -> Self
+fn NormalizationOptions::with_percent_normalize(Self) -> Self
+
+pub enum QueryEncoding {
+  Percent
+  FormUrlencoded
+}
+
+pub struct ReferenceResolver {
+  base : Uri
+}
+fn ReferenceResolver::new(Uri) -> Result[Self, UriError]
+fn ReferenceResolver::resolve(Self, String) -> Result[Uri, UriError]
+fn ReferenceResolver::resolve_batch(Self, Array[String]) -> Array[Result[Uri, UriError]]
+
+pub struct StringBuilder {
+  parts : Array[String]
+}
+fn StringBuilder::append(Self, String) -> Self
+fn StringBuilder::build(Self) -> String
+fn StringBuilder::length(Self) -> Int
+fn StringBuilder::new() -> Self
+
+pub(all) struct Uri {
+  scheme : String
+  authority : Authority?
+  path : String
+  query : String?
+  fragment : String?
+}
+fn Uri::default_port(Self) -> Int?
+fn Uri::effective_port(Self) -> Int?
+fn Uri::equals_normalized(Self, Self) -> Bool
+fn Uri::file_extension(Self) -> String?
+fn Uri::filename(Self) -> String?
+fn Uri::fragment(Self) -> String?
+fn Uri::has_absolute_path(Self) -> Bool
+fn Uri::has_authority(Self) -> Bool
+fn Uri::has_empty_path(Self) -> Bool
+fn Uri::host(Self) -> String?
+fn Uri::is_absolute(Self) -> Bool
+fn Uri::is_relative(Self) -> Bool
+fn Uri::normalize(Self) -> Self
+fn Uri::normalize_rfc3986(Self) -> Self
+fn Uri::normalize_web(Self) -> Self
+fn Uri::normalize_with(Self, NormalizationOptions) -> Self
+fn Uri::parent_path(Self) -> String
+fn Uri::parse(String) -> Result[Self, UriError]
+fn Uri::path(Self) -> String
+fn Uri::port(Self) -> Int?
+fn Uri::query(Self) -> String?
+fn Uri::scheme(Self) -> String
+fn Uri::to_string(Self) -> String
+fn Uri::userinfo(Self) -> String?
+fn Uri::validate(Self) -> Result[Unit, UriError]
+impl Eq for Uri
+impl Show for Uri
+impl ToJson for Uri
+
+pub struct UriBuilder {
+  scheme : String?
+  userinfo : String?
+  host : String?
+  port : Int?
+  path_segments : Array[String]
+  query_params : Array[(String, String)]
+  fragment : String?
+  options : BuilderOptions
+}
+fn UriBuilder::build(Self) -> Result[Uri, UriError]
+fn UriBuilder::build_normalized_with(Self, NormalizationOptions) -> Result[Uri, UriError]
+fn UriBuilder::build_string(Self) -> Result[String, UriError]
+fn UriBuilder::build_web(Self) -> Result[Uri, UriError]
+fn UriBuilder::clear_path(Self) -> Self
+fn UriBuilder::clear_query_params(Self) -> Self
+fn UriBuilder::clone(Self) -> Self
+fn UriBuilder::credentials(Self, String, String) -> Self
+fn UriBuilder::fragment(Self, String) -> Self
+fn UriBuilder::from_string(String) -> Result[Self, UriError]
+fn UriBuilder::from_uri(Uri) -> Self
+fn UriBuilder::host(Self, String) -> Self
+fn UriBuilder::new() -> Self
+fn UriBuilder::path(Self, String) -> Self
+fn UriBuilder::path_segment(Self, String) -> Self
+fn UriBuilder::path_segments(Self, Array[String]) -> Self
+fn UriBuilder::port(Self, Int) -> Self
+fn UriBuilder::query_encoding(Self, QueryEncoding) -> Self
+fn UriBuilder::query_param(Self, String, String) -> Self
+fn UriBuilder::query_param_bool(Self, String, Bool) -> Self
+fn UriBuilder::query_param_if_not_empty(Self, String, String) -> Self
+fn UriBuilder::query_params(Self, Array[(String, String)]) -> Self
+fn UriBuilder::remove_query_param(Self, String) -> Self
+fn UriBuilder::scheme(Self, String) -> Self
+fn UriBuilder::use_form_urlencoded_query_encoding(Self) -> Self
+fn UriBuilder::use_percent_query_encoding(Self) -> Self
+fn UriBuilder::userinfo(Self, String) -> Self
+fn UriBuilder::with_options(BuilderOptions) -> Self
+
+pub enum UriError {
+  InvalidScheme(String)
+  InvalidPort(String)
+  ParseError(String)
+  InvalidPercentEncoding(String)
+  RelativeReferenceError(String)
+  InvalidIPv6Address(String)
+  InvalidHostname(String)
+  InvalidUserinfo(String)
+}
+fn UriError::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
+

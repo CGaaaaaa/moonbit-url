@@ -6,7 +6,8 @@
 // 注意：使用utils.mbt中已定义的工具函数
 // find_char, parse_int, has_prefix, find_substring, to_lowercase
 
-///| URI Authority 组件
+///|
+/// URI Authority 组件
 /// 
 /// Authority部分包含用户信息、主机名和端口号
 /// 格式: [userinfo@]host[:port]
@@ -17,9 +18,10 @@ pub struct Authority {
   host : String
   /// 端口号，有效范围为0-65535
   port : Int?
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson)
 
-///| 创建 Authority 实例
+///|
+/// 创建 Authority 实例
 pub fn Authority::new(
   userinfo : String?,
   host : String,
@@ -28,11 +30,12 @@ pub fn Authority::new(
   { userinfo, host, port }
 }
 
-///| URI 结构
+///|
+/// URI 结构
 /// 
 /// 代表一个完整的URI，包含所有组件
 /// 格式: scheme:[//authority]path[?query][#fragment]
-pub struct Uri {
+pub(all) struct Uri {
   /// URI方案，如http、https、ftp等
   scheme : String
   /// 权威部分，包含主机信息
@@ -43,9 +46,10 @@ pub struct Uri {
   query : String?
   /// 片段标识符
   fragment : String?
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson)
 
-///| URI 解析和操作错误类型
+///|
+/// URI 解析和操作错误类型
 pub enum UriError {
   /// 无效的URI方案
   InvalidScheme(String)
@@ -65,7 +69,8 @@ pub enum UriError {
   InvalidUserinfo(String)
 }
 
-///| 规范化选项
+///|
+/// 规范化选项
 pub struct NormalizationOptions {
   /// 是否折叠路径中的重复斜杠（将多个 '/' 折叠为一个）
   fold_duplicate_slashes : Bool
@@ -85,7 +90,8 @@ pub struct NormalizationOptions {
   idna_profile : IDNAProfile
 }
 
-///| 默认规范化选项（保持当前库既有行为）：
+///|
+/// 默认规范化选项（保持当前库既有行为）：
 /// - 不折叠重复斜杠（构建器层面已会折叠）
 /// - 不启用 IDNA（仅小写化主机）
 pub fn default_normalization_options() -> NormalizationOptions {
@@ -101,77 +107,88 @@ pub fn default_normalization_options() -> NormalizationOptions {
   }
 }
 
-///| 开启折叠重复斜杠选项，返回新的选项值
+///|
+/// 开启折叠重复斜杠选项，返回新的选项值
 pub fn NormalizationOptions::with_fold_duplicate_slashes(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, fold_duplicate_slashes: true }
 }
 
-///| 开启 IDNA 选项，返回新的选项值
+///|
+/// 开启 IDNA 选项，返回新的选项值
 pub fn NormalizationOptions::with_enable_idna(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, enable_idna: true }
 }
 
-///| 启用百分号编码规范化（%HH 大写）
+///|
+/// 启用百分号编码规范化（%HH 大写）
 pub fn NormalizationOptions::with_percent_normalize(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, percent_normalize: true }
 }
 
-///| 在百分号规范化时解码 unreserved 的 %HH
+///|
+/// 在百分号规范化时解码 unreserved 的 %HH
 pub fn NormalizationOptions::with_decode_unreserved_pct(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, decode_unreserved_pct: true }
 }
 
-///| 启用 IPv6 规范化（压缩零段、去前导零、小写）
+///|
+/// 启用 IPv6 规范化（压缩零段、去前导零、小写）
 pub fn NormalizationOptions::with_ipv6_normalize(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, ipv6_normalize: true }
 }
 
-///| 启用主机名点折叠（a..b...c -> a.b.c）
+///|
+/// 启用主机名点折叠（a..b...c -> a.b.c）
 pub fn NormalizationOptions::with_host_collapse_dots(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, host_collapse_dots: true }
 }
 
-///| 启用移除末尾点（example.com. -> example.com）
+///|
+/// 启用移除末尾点（example.com. -> example.com）
 pub fn NormalizationOptions::with_host_strip_trailing_dot(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, host_strip_trailing_dot: true }
 }
 
-///| 选择 IDNA UTS-46 非过渡模式
+///|
+/// 选择 IDNA UTS-46 非过渡模式
 pub fn NormalizationOptions::use_idna_uts46_nontransitional(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, enable_idna: true, idna_profile: IDNAProfile::Uts46NonTransitional }
 }
 
-///| 选择 IDNA UTS-46 过渡模式（如将 ß -> ss 等）
+///|
+/// 选择 IDNA UTS-46 过渡模式（如将 ß -> ss 等）
 pub fn NormalizationOptions::use_idna_uts46_transitional(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, enable_idna: true, idna_profile: IDNAProfile::Uts46Transitional }
 }
 
-///| 选择 IDNA2008 严格模式（启用更严格的校验，拒绝某些上下文字符）
+///|
+/// 选择 IDNA2008 严格模式（启用更严格的校验，拒绝某些上下文字符）
 pub fn NormalizationOptions::use_idna_2008_strict(
   self : NormalizationOptions,
 ) -> NormalizationOptions {
   { ..self, enable_idna: true, idna_profile: IDNAProfile::IDNA2008Strict }
 }
 
-///| 预设：Web 兼容
+///|
+/// 预设：Web 兼容
 pub fn NormalizationOptions::web_compat() -> NormalizationOptions {
   default_normalization_options()
   .with_fold_duplicate_slashes()
@@ -183,13 +200,15 @@ pub fn NormalizationOptions::web_compat() -> NormalizationOptions {
   .with_host_strip_trailing_dot()
 }
 
-///| 预设：RFC 3986 严格
+///|
+/// 预设：RFC 3986 严格
 pub fn NormalizationOptions::rfc3986_strict() -> NormalizationOptions {
   // 不进行 IDNA；保留斜杠；仅进行 %HH 大写与 IPv6 规范化
   default_normalization_options().with_percent_normalize().with_ipv6_normalize()
 }
 
-///| UriError to_string implementation
+///|
+/// UriError to_string implementation
 pub fn UriError::to_string(self : UriError) -> String {
   match self {
     InvalidScheme(msg) => "InvalidScheme: " + msg
@@ -203,40 +222,41 @@ pub fn UriError::to_string(self : UriError) -> String {
   }
 }
 
-///| 解析 URI
+///|
+/// 解析 URI
 pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
-  if is_empty(input) {
+  if input.is_empty() {
     return Err(ParseError("Empty URI"))
   }
 
   // RFC 3986 推荐的解析顺序：先解析 scheme，再解析其他组件
   // 首先找到 scheme 分隔符
-  match find_substring(input, ":") {
+  match input.find(":") {
     Some(scheme_pos) => {
-      let scheme = input.substring(start=0, end=scheme_pos)
+      let scheme = try! input[0:scheme_pos].to_string()
       if not(is_valid_scheme(scheme)) {
         return Err(InvalidScheme("Invalid scheme: " + scheme))
       }
-      let mut remaining = input.substring(start=scheme_pos + 1)
+      let mut remaining = try! input[scheme_pos + 1:].to_string()
       let mut authority : Authority? = None
       let mut path = ""
       let mut query : String? = None
       let mut fragment : String? = None
 
       // 检查是否有 authority（以 "//" 开头）
-      if has_prefix(remaining, "//") {
-        remaining = remaining.substring(start=2)
+      if remaining.has_prefix("//") {
+        remaining = try! remaining[2:].to_string()
 
         // 找到 authority 结束位置（由 path、query 或 fragment 标记）
         let mut auth_end = remaining.length()
         for delimiter in ['/', '?', '#'] {
-          match find_char(remaining, delimiter) {
+          match remaining.find(Char::to_string(delimiter)) {
             Some(pos) => if pos < auth_end { auth_end = pos }
             None => ()
           }
         }
-        let auth_str = remaining.substring(start=0, end=auth_end)
-        remaining = remaining.substring(start=auth_end)
+        let auth_str = try! remaining[0:auth_end].to_string()
+        remaining = try! remaining[auth_end:].to_string()
         match parse_authority(auth_str) {
           Ok(auth) => {
             // 如果主机为空且scheme不是file，则视为错误
@@ -251,19 +271,19 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
 
       // 解析 path、query 和 fragment
       // 先提取 fragment（最后的 #）
-      match find_char(remaining, '#') {
+      match remaining.find("#") {
         Some(frag_pos) => {
-          fragment = Some(remaining.substring(start=frag_pos + 1))
-          remaining = remaining.substring(start=0, end=frag_pos)
+          fragment = Some(try! remaining[frag_pos + 1:].to_string())
+          remaining = try! remaining[0:frag_pos].to_string()
         }
         None => ()
       }
 
       // 然后提取 query（最后的 ?）
-      match find_char(remaining, '?') {
+      match remaining.find("?") {
         Some(query_pos) => {
-          query = Some(remaining.substring(start=query_pos + 1))
-          remaining = remaining.substring(start=0, end=query_pos)
+          query = Some(try! remaining[query_pos + 1:].to_string())
+          remaining = try! remaining[0:query_pos].to_string()
         }
         None => ()
       }
@@ -276,7 +296,8 @@ pub fn Uri::parse(input : String) -> Result[Uri, UriError] {
   }
 }
 
-///| 解析 Authority 部分
+///|
+/// 解析 Authority 部分
 fn parse_authority(auth : String) -> Result[Authority, UriError] {
   let mut remaining = auth
   let mut userinfo : String? = None
@@ -284,32 +305,32 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   let mut port : Int? = None
 
   // 检查 userinfo
-  match find_char(remaining, '@') {
+  match remaining.find("@") {
     Some(pos) => {
-      let userinfo_part = remaining.substring(start=0, end=pos)
+      let userinfo_part = try! remaining[0:pos].to_string()
       // 验证userinfo格式
       if not(is_valid_userinfo(userinfo_part)) {
         return Err(InvalidUserinfo("Invalid userinfo format: " + userinfo_part))
       }
       // 保留原样（包括仅":" 的情况），以便与 non-special://:@test/x 一致
       userinfo = Some(userinfo_part)
-      remaining = remaining.substring(start=pos + 1)
+      remaining = try! remaining[pos + 1:].to_string()
     }
     None => ()
   }
 
   // 检查 IPv6 地址
-  if has_prefix(remaining, "[") {
-    match find_char(remaining, ']') {
+  if remaining.has_prefix("[") {
+    match remaining.find("]") {
       Some(pos) => {
-        let ipv6_part = remaining.substring(start=1, end=pos) // 去掉方括号
+        let ipv6_part = try! remaining[1:pos].to_string() // 去掉方括号
         if not(is_valid_ipv6(ipv6_part)) {
           return Err(
             InvalidIPv6Address("Invalid IPv6 address format: " + ipv6_part),
           )
         }
-        host = remaining.substring(start=0, end=pos + 1)
-        remaining = remaining.substring(start=pos + 1)
+        host = try! remaining[0:pos + 1].to_string()
+        remaining = try! remaining[pos + 1:].to_string()
       }
       None =>
         return Err(
@@ -318,10 +339,10 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
     }
   } else {
     // 普通 host，查找 port 分隔符
-    match find_char(remaining, ':') {
+    match remaining.find(":") {
       Some(pos) => {
-        host = remaining.substring(start=0, end=pos)
-        remaining = remaining.substring(start=pos + 1)
+        host = try! remaining[0:pos].to_string()
+        remaining = try! remaining[pos + 1:].to_string()
       }
       None => {
         host = remaining
@@ -333,8 +354,8 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   // 解析 port
   if remaining.length() > 0 {
     // 兼容两种分支：非IPv6分支已消费冒号、IPv6分支保留冒号
-    let port_str = if has_prefix(remaining, ":") {
-      remaining.substring(start=1)
+    let port_str = if remaining.has_prefix(":") {
+      try! remaining[1:].to_string()
     } else {
       remaining
     }
@@ -360,14 +381,15 @@ fn parse_authority(auth : String) -> Result[Authority, UriError] {
   Ok({ userinfo, host, port })
 }
 
-///| 验证 scheme 是否有效
+///|
+/// 验证 scheme 是否有效
 /// 根据 RFC 3986，scheme 必须：
 /// - 以字母开头
 /// - 后续字符只能是字母、数字、'+'、'-'、'.'
 /// - 长度合理（实际限制建议不超过64字符）
 /// - 大小写不敏感（接受大写，但会标准化为小写）
 fn is_valid_scheme(scheme : String) -> Bool {
-  if is_empty(scheme) {
+  if scheme.is_empty() {
     return false
   }
 
@@ -378,7 +400,7 @@ fn is_valid_scheme(scheme : String) -> Bool {
 
   // 第一个字符必须是字母
   let first = Int::unsafe_to_char(scheme[0])
-  if not(is_alpha_char(first)) {
+  if not(first.is_ascii_alphabetic()) {
     return false
   }
 
@@ -406,7 +428,8 @@ fn is_valid_scheme(scheme : String) -> Bool {
   true
 }
 
-///| 转换为字符串
+///|
+/// 转换为字符串
 pub fn Uri::to_string(self : Uri) -> String {
   let mut result = self.scheme + ":"
   match self.authority {
@@ -425,7 +448,8 @@ pub fn Uri::to_string(self : Uri) -> String {
   result
 }
 
-///| Authority 转换为字符串
+///|
+/// Authority 转换为字符串
 pub fn Authority::to_string(self : Authority) -> String {
   let mut result = ""
   match self.userinfo {
@@ -442,7 +466,8 @@ pub fn Authority::to_string(self : Authority) -> String {
 
 // ==================== 高级URI操作功能 ====================
 
-///| 获取主机名
+///|
+/// 获取主机名
 pub fn Uri::host(self : Uri) -> String? {
   match self.authority {
     Some(auth) => Some(auth.host)
@@ -450,7 +475,8 @@ pub fn Uri::host(self : Uri) -> String? {
   }
 }
 
-///| 获取端口号
+///|
+/// 获取端口号
 pub fn Uri::port(self : Uri) -> Int? {
   match self.authority {
     Some(auth) => auth.port
@@ -458,12 +484,14 @@ pub fn Uri::port(self : Uri) -> Int? {
   }
 }
 
-///| 获取默认端口号（基于scheme）
+///|
+/// 获取默认端口号（基于scheme）
 pub fn Uri::default_port(self : Uri) -> Int? {
   get_default_port(self.scheme)
 }
 
-///| 获取用户信息
+///|
+/// 获取用户信息
 pub fn Uri::userinfo(self : Uri) -> String? {
   match self.authority {
     Some(auth) => auth.userinfo
@@ -471,32 +499,38 @@ pub fn Uri::userinfo(self : Uri) -> String? {
   }
 }
 
-///| 获取scheme组件
+///|
+/// 获取scheme组件
 pub fn Uri::scheme(self : Uri) -> String {
   self.scheme
 }
 
-///| 获取path组件
+///|
+/// 获取path组件
 pub fn Uri::path(self : Uri) -> String {
   self.path
 }
 
-///| 获取query组件
+///|
+/// 获取query组件
 pub fn Uri::query(self : Uri) -> String? {
   self.query
 }
 
-///| 获取fragment组件
+///|
+/// 获取fragment组件
 pub fn Uri::fragment(self : Uri) -> String? {
   self.fragment
 }
 
-///| 检查是否为相对URI（无scheme）
+///|
+/// 检查是否为相对URI（无scheme）
 pub fn Uri::is_relative(self : Uri) -> Bool {
-  is_empty(self.scheme)
+  self.scheme.is_empty()
 }
 
-///| 检查是否有authority组件
+///|
+/// 检查是否有authority组件
 pub fn Uri::has_authority(self : Uri) -> Bool {
   match self.authority {
     Some(_) => true
@@ -504,17 +538,20 @@ pub fn Uri::has_authority(self : Uri) -> Bool {
   }
 }
 
-///| 检查路径是否为绝对路径（以/开头）
+///|
+/// 检查路径是否为绝对路径（以/开头）
 pub fn Uri::has_absolute_path(self : Uri) -> Bool {
   self.path.has_prefix("/")
 }
 
-///| 检查路径是否为空
+///|
+/// 检查路径是否为空
 pub fn Uri::has_empty_path(self : Uri) -> Bool {
   self.path.length() == 0
 }
 
-///| 获取有效端口（显式端口或scheme的默认端口）
+///|
+/// 获取有效端口（显式端口或scheme的默认端口）
 pub fn Uri::effective_port(self : Uri) -> Int? {
   match self.port() {
     Some(port) => Some(port)
@@ -522,7 +559,8 @@ pub fn Uri::effective_port(self : Uri) -> Int? {
   }
 }
 
-///| 获取文件名（路径的最后一个组件）
+///|
+/// 获取文件名（路径的最后一个组件）
 pub fn Uri::filename(self : Uri) -> String? {
   if self.path.has_suffix("/") || self.path.length() == 0 {
     return None
@@ -541,14 +579,15 @@ pub fn Uri::filename(self : Uri) -> String? {
   }
 }
 
-///| 获取文件扩展名
+///|
+/// 获取文件扩展名
 pub fn Uri::file_extension(self : Uri) -> String? {
   match self.filename() {
     Some(filename) =>
       match filename.rev_find(".") {
         Some(index) =>
           if index < filename.length() - 1 {
-            Some(filename.substring(start=index + 1))
+            Some(try! filename[index + 1:].to_string())
           } else {
             None
           }
@@ -558,7 +597,8 @@ pub fn Uri::file_extension(self : Uri) -> String? {
   }
 }
 
-///| 获取父路径
+///|
+/// 获取父路径
 pub fn Uri::parent_path(self : Uri) -> String {
   if self.path.length() == 0 {
     return ""
@@ -569,7 +609,7 @@ pub fn Uri::parent_path(self : Uri) -> String {
     return "/"
   }
   let trimmed = if self.path.has_suffix("/") {
-    self.path.substring(start=0, end=self.path.length() - 1)
+    try! self.path[0:self.path.length() - 1].to_string()
   } else {
     self.path
   }
@@ -578,41 +618,47 @@ pub fn Uri::parent_path(self : Uri) -> String {
       if index == 0 {
         "/"
       } else {
-        trimmed.substring(start=0, end=index)
+        try! trimmed[0:index].to_string()
       }
     None => ""
   }
 }
 
-///| 规范化比较两个URI是否相等
+///|
+/// 规范化比较两个URI是否相等
 pub fn Uri::equals_normalized(self : Uri, other : Uri) -> Bool {
   let normalized_self = self.normalize()
   let normalized_other = other.normalize()
   normalized_self.to_string() == normalized_other.to_string()
 }
 
-///| 检查是否为绝对URI
+///|
+/// 检查是否为绝对URI
 pub fn Uri::is_absolute(self : Uri) -> Bool {
   // 绝对URI：拥有非空 scheme 即视为绝对（RFC 3986）
-  is_not_empty(self.scheme)
+  !self.scheme.is_empty()
 }
 
-///| 规范化URI
+///|
+/// 规范化URI
 pub fn Uri::normalize(self : Uri) -> Uri {
   self.normalize_with(default_normalization_options())
 }
 
-///| 使用 Web 兼容预设进行规范化（启用 UTS-46 非过渡、折叠重复斜杠、% 编码规范化、IPv6 规范化、点折叠与去尾点）
+///|
+/// 使用 Web 兼容预设进行规范化（启用 UTS-46 非过渡、折叠重复斜杠、% 编码规范化、IPv6 规范化、点折叠与去尾点）
 pub fn Uri::normalize_web(self : Uri) -> Uri {
   self.normalize_with(NormalizationOptions::web_compat())
 }
 
-///| 使用 RFC 3986 严格预设进行规范化（不启用 IDNA，仅进行必要规范化）
+///|
+/// 使用 RFC 3986 严格预设进行规范化（不启用 IDNA，仅进行必要规范化）
 pub fn Uri::normalize_rfc3986(self : Uri) -> Uri {
   self.normalize_with(NormalizationOptions::rfc3986_strict())
 }
 
-///| 使用自定义选项进行规范化
+///|
+/// 使用自定义选项进行规范化
 pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   let normalized_scheme = self.scheme
 
@@ -620,7 +666,7 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   let normalized_authority = match self.authority {
     Some(auth) => {
       let lowered_host = if auth.host.length() > 0 {
-        to_lowercase(auth.host)
+        auth.host.to_lower()
       } else {
         auth.host
       }
@@ -640,7 +686,7 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
         host_after_trailing
       }
       let final_host = if options.ipv6_normalize &&
-        has_prefix(host_after_idna, "[") {
+        host_after_idna.has_prefix("[") {
         normalize_ipv6_literal(host_after_idna)
       } else {
         host_after_idna
@@ -715,7 +761,8 @@ pub fn Uri::normalize_with(self : Uri, options : NormalizationOptions) -> Uri {
   }
 }
 
-///| 折叠路径中的重复斜杠（不改变其他字符）
+///|
+/// 折叠路径中的重复斜杠（不改变其他字符）
 fn fold_duplicate_slashes(path : String) -> String {
   if path.length() == 0 {
     return ""
@@ -740,34 +787,36 @@ fn fold_duplicate_slashes(path : String) -> String {
 
 // 已移除未使用的 is_domain_host
 
-///| 折叠主机中的重复点（.. -> .）
+///|
+/// 折叠主机中的重复点（.. -> .）
 fn collapse_host_dots(host : String) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   }
-  let labels = split_string(host, '.')
+  let labels = host.split(".")
   let filtered : Array[String] = []
   for l in labels {
     if l.length() > 0 {
-      filtered.push(l)
+      filtered.push(l.to_string())
     }
   }
   filtered.join(".")
 }
 
-///| 去掉主机末尾点（example.com. -> example.com）
+///|
+/// 去掉主机末尾点（example.com. -> example.com）
 fn strip_trailing_dot(host : String) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   }
   if host.has_suffix(".") {
-    host.substring(start=0, end=host.length() - 1)
+    try! host[0:host.length() - 1].to_string()
   } else {
     host
   }
@@ -775,7 +824,8 @@ fn strip_trailing_dot(host : String) -> String {
 
 // 已移除未使用的 normalize_host_idna（由 normalize_host_with_profile 取代）
 
-///| IDNA 配置
+///|
+/// IDNA 配置
 pub enum IDNAProfile {
   /// UTS-46 非过渡（推荐现代浏览器行为，保留 ß 等）
   Uts46NonTransitional
@@ -785,24 +835,25 @@ pub enum IDNAProfile {
   IDNA2008Strict
 } derive(Show, Eq)
 
-///| 依据 profile 进行主机名 IDNA 规范化与 Punycode 编码
+///|
+/// 依据 profile 进行主机名 IDNA 规范化与 Punycode 编码
 fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
   if host.length() == 0 {
     return host
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return host
   } // IPv6
   let preprocessed = map_alt_dots(host)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
+    if lower.has_prefix("xn--") {
       out_labels.push(lower)
       continue
     }
@@ -844,7 +895,8 @@ fn normalize_host_with_profile(host : String, profile : IDNAProfile) -> String {
   out_labels.join(".")
 }
 
-///| 依据 profile 进行主机名 IDNA 规范化（返回错误而非静默回退）。
+///|
+/// 依据 profile 进行主机名 IDNA 规范化（返回错误而非静默回退）。
 /// 严格模式推荐使用；非严格模式亦可用以获取明确错误。
 fn normalize_host_with_profile_strict(
   host : String,
@@ -853,19 +905,19 @@ fn normalize_host_with_profile_strict(
   if host.length() == 0 {
     return Some(host)
   }
-  if has_prefix(host, "[") {
+  if host.has_prefix("[") {
     return Some(host)
   } // IPv6
   let preprocessed = map_alt_dots(host)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
+    if lower.has_prefix("xn--") {
       out_labels.push(lower)
       continue
     }
@@ -891,18 +943,21 @@ fn normalize_host_with_profile_strict(
   Some(out_labels.join("."))
 }
 
-///| 将域名根据给定 IDNA 配置转换为 ASCII（可能包含 `xn--` 标签）。
+///|
+/// 将域名根据给定 IDNA 配置转换为 ASCII（可能包含 `xn--` 标签）。
 /// 仅对 host 生效；IPv6 字面量原样返回。
 pub fn domain_to_ascii(domain : String, profile : IDNAProfile) -> String {
   normalize_host_with_profile(domain, profile)
 }
 
-///| 严格版本：返回严格 IDNA 校验后 ASCII 域名（固定使用 IDNA2008Strict），失败返回 None
+///|
+/// 严格版本：返回严格 IDNA 校验后 ASCII 域名（固定使用 IDNA2008Strict），失败返回 None
 pub fn domain_to_ascii_strict(domain : String) -> String? {
   normalize_host_with_profile_strict(domain, IDNAProfile::IDNA2008Strict)
 }
 
-///| 兼容版本：允许指定 profile 的严格 ASCII 转换。建议优先使用无参严格版。
+///|
+/// 兼容版本：允许指定 profile 的严格 ASCII 转换。建议优先使用无参严格版。
 pub fn domain_to_ascii_strict_with_profile(
   domain : String,
   profile : IDNAProfile,
@@ -910,7 +965,8 @@ pub fn domain_to_ascii_strict_with_profile(
   normalize_host_with_profile_strict(domain, profile)
 }
 
-///| 将域名从 ASCII/Punycode 转为 Unicode。会解码 `xn--` 标签，其余标签按小写返回。
+///|
+/// 将域名从 ASCII/Punycode 转为 Unicode。会解码 `xn--` 标签，其余标签按小写返回。
 /// - IPv6 字面量原样返回
 /// - 会处理 U+3002/U+FF0E/U+FF61 作为分隔符
 /// - 解码失败时保留原标签的小写形式
@@ -918,20 +974,20 @@ pub fn domain_to_unicode(domain : String) -> String {
   if domain.length() == 0 {
     return domain
   }
-  if has_prefix(domain, "[") {
+  if domain.has_prefix("[") {
     return domain
   }
   let preprocessed = map_alt_dots(domain)
-  let labels = split_string(preprocessed, '.')
+  let labels = preprocessed.split(".")
   let out_labels : Array[String] = []
   for raw_label in labels {
-    let lower = to_lowercase(raw_label)
+    let lower = raw_label.to_string().to_lower()
     if lower.length() == 0 {
       out_labels.push("")
       continue
     }
-    if has_prefix(lower, "xn--") {
-      let puny = lower.substring(start=4)
+    if lower.has_prefix("xn--") {
+      let puny = try! lower[4:].to_string()
       match punycode_decode_strict(puny) {
         Some(decoded) => {
           // 可选：对解码后的标签应用 TR46+NFKC 以获得规范化视图
@@ -955,7 +1011,8 @@ pub fn domain_to_unicode(domain : String) -> String {
   out_labels.join(".")
 }
 
-///| 将 U+3002、U+FF0E、U+FF61 映射为 '.'，以便统一分割
+///|
+/// 将 U+3002、U+FF0E、U+FF61 映射为 '.'，以便统一分割
 fn map_alt_dots(s : String) -> String {
   let mut out = ""
   for i = 0; i < s.length(); i = i + 1 {
@@ -970,7 +1027,8 @@ fn map_alt_dots(s : String) -> String {
   out
 }
 
-///| UTS-46 字符映射（增强的最小实现）：
+///|
+/// UTS-46 字符映射（增强的最小实现）：
 /// - 非过渡：保留 ß (U+00DF)
 /// - 过渡：ß -> ss
 /// - 删除 ZWJ/ZWNJ（ContextJ：在严格模式下将导致校验失败）
@@ -1007,7 +1065,8 @@ fn uts46_map(input : String, profile : IDNAProfile) -> (String, Bool) {
   (out, had_contextj)
 }
 
-///| TR46 映射 + NFKC（增强子集）：
+///|
+/// TR46 映射 + NFKC（增强子集）：
 /// - 复用 uts46_map 的宽度映射、ß 处理、去除 ZWJ/ZWNJ（记录 had_contextj）
 /// - 追加常见兼容字符归一：拉丁合字 U+FB00..U+FB06；全角已由上游处理
 /// - 追加占位 NFKC：当前未实现完整 Unicode 数据表，仅覆盖常见场景
@@ -1017,7 +1076,8 @@ fn tr46_map_and_nfkc(input : String, profile : IDNAProfile) -> (String, Bool) {
   (after_nfkc, had_ctxj)
 }
 
-///| 简化 NFKC：处理少量常见兼容等价字符（不完整）
+///|
+/// 简化 NFKC：处理少量常见兼容等价字符（不完整）
 fn nfkc_lite(input : String) -> String {
   let mut out = ""
   let mut i = 0
@@ -1046,7 +1106,8 @@ fn nfkc_lite(input : String) -> String {
   out
 }
 
-///| 标签校验（保守实现）：长度/连字符；严格模式下附加 STD3、连字符 3-4、Bidi 与 ContextJ 检查
+///|
+/// 标签校验（保守实现）：长度/连字符；严格模式下附加 STD3、连字符 3-4、Bidi 与 ContextJ 检查
 fn is_valid_uts46_label(
   label : String,
   profile : IDNAProfile,
@@ -1106,7 +1167,8 @@ fn is_valid_uts46_label(
   true
 }
 
-///| 标签校验（返回错误类型）。严格模式建议使用本函数。
+///|
+/// 标签校验（返回错误类型）。严格模式建议使用本函数。
 fn validate_uts46_label(
   label : String,
   profile : IDNAProfile,
@@ -1161,7 +1223,8 @@ fn validate_uts46_label(
   true
 }
 
-///| ContextO 简化检查：
+///|
+/// ContextO 简化检查：
 /// - U+00B7 仅允许出现在 "l·l" 中
 /// - U+0375 仅允许其后跟希腊字母
 /// - U+30FB 仅允许标签含有日文假名（Hiragana/Katakana）
@@ -1478,7 +1541,8 @@ fn is_rtl_range(cp : Int) -> Bool {
   cp >= 0x0590 && cp <= 0x08FF
 }
 
-///| 完整 Punycode 编码实现（RFC 3492），针对单个 label
+///|
+/// 完整 Punycode 编码实现（RFC 3492），针对单个 label
 fn punycode_encode_strict(label : String) -> String? {
   // 将字符串拆为码点数组
   let codepoints = to_codepoints(label)
@@ -1568,7 +1632,8 @@ fn punycode_encode_strict(label : String) -> String? {
   Some(output)
 }
 
-///| 适配函数（RFC 3492）
+///|
+/// 适配函数（RFC 3492）
 fn adapt_bias(delta : Int, num_points : Int, first_time : Bool) -> Int {
   let base = 36
   let t_min = 1
@@ -1584,7 +1649,8 @@ fn adapt_bias(delta : Int, num_points : Int, first_time : Bool) -> Int {
   k + (base - t_min + 1) * d / (d + skew)
 }
 
-///| 将 0..35 的数字映射为 ASCII 字符（0-25 -> a-z, 26-35 -> 0-9）
+///|
+/// 将 0..35 的数字映射为 ASCII 字符（0-25 -> a-z, 26-35 -> 0-9）
 fn encode_digit(d : Int) -> String {
   if d < 26 {
     Int::unsafe_to_char(Char::to_int('a') + d).to_string()
@@ -1593,7 +1659,8 @@ fn encode_digit(d : Int) -> String {
   }
 }
 
-///| 将 ASCII 字符解码为 punycode 数字（0..35）
+///|
+/// 将 ASCII 字符解码为 punycode 数字（0..35）
 fn decode_digit_char(c : Char) -> Int? {
   let code = Char::to_int(c)
   // a-z
@@ -1611,7 +1678,8 @@ fn decode_digit_char(c : Char) -> Int? {
   None
 }
 
-///| 将码点数组转为字符串
+///|
+/// 将码点数组转为字符串
 fn codepoints_to_string(cps : Array[Int]) -> String {
   let mut s = ""
   for cp in cps {
@@ -1620,7 +1688,8 @@ fn codepoints_to_string(cps : Array[Int]) -> String {
   s
 }
 
-///| Punycode 解码（RFC 3492），针对单个标签（不含前缀 `xn--`）
+///|
+/// Punycode 解码（RFC 3492），针对单个标签（不含前缀 `xn--`）
 fn punycode_decode_strict(puny : String) -> String? {
   let base = 36
   let t_min = 1
@@ -1720,7 +1789,8 @@ fn punycode_decode_strict(puny : String) -> String? {
   Some(codepoints_to_string(output))
 }
 
-///| 将字符串转为 Unicode 码点数组（正确处理UTF-16代理项对）
+///|
+/// 将字符串转为 Unicode 码点数组（正确处理UTF-16代理项对）
 fn to_codepoints(s : String) -> Array[Int] {
   let cps : Array[Int] = []
   let mut i = 0
@@ -1760,7 +1830,8 @@ fn to_codepoints(s : String) -> Array[Int] {
   cps
 }
 
-///| 检查字符串是否包含非 ASCII 字符（正确处理UTF-16代理项对）
+///|
+/// 检查字符串是否包含非 ASCII 字符（正确处理UTF-16代理项对）
 fn contains_non_ascii(s : String) -> Bool {
   let mut i = 0
   while i < s.length() {
@@ -1800,7 +1871,8 @@ fn contains_non_ascii(s : String) -> Bool {
   false
 }
 
-///| 百分号编码规范化：将 %hh/%hH/%Hh 统一为大写；可选地解码 unreserved 的 %HH
+///|
+/// 百分号编码规范化：将 %hh/%hH/%Hh 统一为大写；可选地解码 unreserved 的 %HH
 fn normalize_percent_encoding_in_string(
   input : String,
   decode_unreserved : Bool,
@@ -1838,26 +1910,27 @@ fn normalize_percent_encoding_in_string(
 
 // 移除本地 is_unreserved_byte，统一使用 percent_encoding.mbt 中的公开实现
 
-///| 规范化 IPv6 字面量（基于 RFC 5952）：
+///|
+/// 规范化 IPv6 字面量（基于 RFC 5952）：
 /// - 小写十六进制
 /// - 去掉每段的前导零
 /// - 压缩最长的连续零段为 ::（仅一次，选择最左）
 fn normalize_ipv6_literal(host_with_brackets : String) -> String {
   // 输入形如 "[2001:0DB8:0000:0000:0000:ff00:0042:8329]" 或带 zone-id
-  if !has_prefix(host_with_brackets, "[") {
+  if !host_with_brackets.has_prefix("[") {
     return host_with_brackets
   }
-  match find_char(host_with_brackets, ']') {
+  match host_with_brackets.find("]") {
     Some(end_idx) => {
-      let inside = host_with_brackets.substring(start=1, end=end_idx)
+      let inside = try! host_with_brackets[1:end_idx].to_string()
       // 保留可能的 zone-id（%25...）
       let mut core = inside
       let mut zone = ""
       if inside.contains("%") {
-        match find_substring(inside, "%25") {
+        match inside.find("%") {
           Some(idx) => {
-            core = inside.substring(start=0, end=idx)
-            zone = inside.substring(start=idx) // 包含 %25...
+            core = try! inside[0:idx].to_string()
+            zone = try! inside[idx:].to_string() // 包含 %25...
           }
           None => return host_with_brackets
         }
@@ -1877,9 +1950,9 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
           let trimmed = if j == seg.length() {
             "0"
           } else {
-            seg.substring(start=j)
+            try! seg[j:].to_string()
           }
-          cleaned.push(to_lowercase(trimmed))
+          cleaned.push(trimmed.to_lower())
         }
       }
       // 找到最长的连续 "0" 段序列用于 :: 压缩
@@ -1924,7 +1997,8 @@ fn normalize_ipv6_literal(host_with_brackets : String) -> String {
   }
 }
 
-///| 找到最长的连续零段
+///|
+/// 找到最长的连续零段
 fn find_longest_zero_run(segments : Array[String]) -> (Int, Int) {
   let mut best_start = -1
   let mut best_len = 0
@@ -1955,7 +2029,8 @@ fn find_longest_zero_run(segments : Array[String]) -> (Int, Int) {
 
 // 已移除未使用的 punycode_encode_label（由 punycode_encode_strict 取代）
 
-///| 验证URI是否有效
+///|
+/// 验证URI是否有效
 pub fn Uri::validate(self : Uri) -> Result[Unit, UriError] {
   // 验证scheme
   if not(is_valid_scheme(self.scheme)) {
@@ -1981,7 +2056,8 @@ pub fn Uri::validate(self : Uri) -> Result[Unit, UriError] {
   Ok(())
 }
 
-///| 规范化端口号（移除默认端口）
+///|
+/// 规范化端口号（移除默认端口）
 fn normalize_port(scheme : String, port : Int?) -> Int? {
   match port {
     Some(p) =>
@@ -1993,7 +2069,8 @@ fn normalize_port(scheme : String, port : Int?) -> Int? {
   }
 }
 
-///| 验证userinfo格式是否有效
+///|
+/// 验证userinfo格式是否有效
 fn is_valid_userinfo(userinfo : String) -> Bool {
   // userinfo可以为空
   if userinfo.length() == 0 {
@@ -2020,7 +2097,8 @@ fn is_valid_userinfo(userinfo : String) -> Bool {
   true
 }
 
-///| 验证IPv6地址格式（RFC 3986兼容实现）
+///|
+/// 验证IPv6地址格式（RFC 3986兼容实现）
 fn is_valid_ipv6(ipv6 : String) -> Bool {
   if ipv6.length() == 0 {
     return false
@@ -2029,10 +2107,10 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
   // 允许 RFC 6874 zone-id：形如 "%25zone"，仅校验百分号序列并在校验时忽略zone部分
   let mut core = ipv6
   if ipv6.contains("%") {
-    match find_substring(ipv6, "%25") {
+    match ipv6.find("%25") {
       Some(idx) =>
         // zone-id 可以为空或包含更多 pct-encoded/未编码的合法标识字符，这里仅对核心地址做校验
-        core = ipv6.substring(start=0, end=idx)
+        core = try! ipv6[0:idx].to_string()
       None => return false // 存在%但不是%25则非法
     }
   }
@@ -2087,21 +2165,23 @@ fn is_valid_ipv6(ipv6 : String) -> Bool {
   }
 }
 
-///| 验证IPv6段（每段最多4个十六进制字符）
+///|
+/// 验证IPv6段（每段最多4个十六进制字符）
 fn is_valid_ipv6_segment(segment : String) -> Bool {
   if segment.length() == 0 || segment.length() > 4 {
     return false
   }
   for i = 0; i < segment.length(); i = i + 1 {
     let c = Int::unsafe_to_char(segment[i])
-    if not(is_hex_char(c)) {
+    if not(c.is_ascii_hexdigit()) {
       return false
     }
   }
   true
 }
 
-///| 分割IPv6地址为段
+///|
+/// 分割IPv6地址为段
 fn split_ipv6_segments(ipv6 : String) -> Array[String] {
   let segments : Array[String] = []
   let mut current_segment = ""
@@ -2127,28 +2207,30 @@ fn split_ipv6_segments(ipv6 : String) -> Array[String] {
   segments
 }
 
-///| 验证IPv4映射的IPv6地址
+///|
+/// 验证IPv4映射的IPv6地址
 fn validate_ipv4_mapped_ipv6(ipv6 : String) -> Bool {
   // ::ffff:192.0.2.1 格式
-  if has_prefix(ipv6, "::ffff:") {
-    let ipv4_part = ipv6.substring(start=7)
+  if ipv6.has_prefix("::ffff:") {
+    let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }
-  if has_prefix(ipv6, "::FFFF:") {
-    let ipv4_part = ipv6.substring(start=7)
+  if ipv6.has_prefix("::FFFF:") {
+    let ipv4_part = try! ipv6[7:].to_string()
     return is_valid_ipv4(ipv4_part)
   }
   false
 }
 
-///| 验证IPv4地址格式
+///|
+/// 验证IPv4地址格式
 fn is_valid_ipv4(ipv4 : String) -> Bool {
-  let parts = split_string(ipv4, '.')
+  let parts = ipv4.split(".").to_array()
   if parts.length() != 4 {
     return false
   }
   for part in parts {
-    match parse_int(part) {
+    match parse_int(part.to_string()) {
       Some(num) => {
         if num < 0 || num > 255 {
           return false

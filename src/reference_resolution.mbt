@@ -1,6 +1,7 @@
 /// 简化的 URI 引用解析实现
 
-///| 获取路径的父目录
+///|
+/// 获取路径的父目录
 fn get_parent_path(path : String) -> String {
   let mut last_slash = -1
   for i = path.length() - 1; i >= 0; i = i - 1 {
@@ -15,18 +16,19 @@ fn get_parent_path(path : String) -> String {
   if last_slash == 0 {
     return "/"
   }
-  path.substring(start=0, end=last_slash)
+  try! path[0:last_slash].to_string()
 }
 
 // 使用通用工具函数：`utils.mbt` 中的 `is_alpha_char` 与 `is_alphanumeric_char`
 
-///| 校验scheme语法是否有效: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+///|
+/// 校验scheme语法是否有效: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 fn is_valid_scheme_syntax(scheme : String) -> Bool {
   if scheme.is_empty() {
     return false
   }
   let first = Int::unsafe_to_char(scheme[0])
-  if not(is_alpha_char(first)) {
+  if not(first.is_ascii_alphabetic()) {
     return false
   }
   for i = 1; i < scheme.length(); i = i + 1 {
@@ -38,7 +40,8 @@ fn is_valid_scheme_syntax(scheme : String) -> Bool {
   true
 }
 
-///| 严格判定字符串是否为绝对URI语法（基于RFC 3986）
+///|
+/// 严格判定字符串是否为绝对URI语法（基于RFC 3986）
 fn has_absolute_uri_syntax(reference : String) -> Bool {
   match reference.find(":") {
     Some(colon_pos) => {
@@ -65,14 +68,15 @@ fn has_absolute_uri_syntax(reference : String) -> Bool {
       if colon_pos >= min_sep {
         return false
       }
-      let scheme = reference.substring(start=0, end=colon_pos)
+      let scheme = try! reference[0:colon_pos].to_string()
       is_valid_scheme_syntax(scheme)
     }
     None => false
   }
 }
 
-///| 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
+///|
+/// 解析引用，将相对引用与基URI结合（RFC 3986标准实现）
 pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   // 验证基URI必须是绝对的
   if not(base.is_absolute()) {
@@ -87,7 +91,7 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   let mut target_fragment = None
 
   // 如果引用定义了scheme，则这是一个绝对引用
-  if is_not_empty(reference.scheme) {
+  if !reference.scheme.is_empty() {
     target_scheme = reference.scheme
     target_authority = reference.authority
     target_path = remove_dot_segments(reference.path)
@@ -100,7 +104,7 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
       target_query = reference.query
     } else {
       // 没有权威部分
-      if is_empty(reference.path) {
+      if reference.path.is_empty() {
         target_path = base.path
         if reference.query is Some(_) {
           target_query = reference.query
@@ -129,13 +133,14 @@ pub fn resolve_reference(base : Uri, reference : Uri) -> Result[Uri, UriError] {
   })
 }
 
-///| 合并路径（RFC 3986 Section 5.2.3）
+///|
+/// 合并路径（RFC 3986 Section 5.2.3）
 fn merge_paths(base : Uri, path : String) -> String {
-  if base.authority is Some(_) && is_empty(base.path) {
+  if base.authority is Some(_) && base.path.is_empty() {
     "/" + path
   } else {
     let base_parent = get_parent_path(base.path)
-    if is_empty(base_parent) {
+    if base_parent.is_empty() {
       path
     } else if base_parent == "/" {
       "/" + path
@@ -145,28 +150,29 @@ fn merge_paths(base : Uri, path : String) -> String {
   }
 }
 
-///| 移除路径中的点段（RFC 3986标准实现）
+///|
+/// 移除路径中的点段（RFC 3986标准实现）
 pub fn remove_dot_segments(path : String) -> String {
   if path.is_empty() {
     return ""
   }
   let mut input = path
   let mut output = ""
-  while is_not_empty(input) {
+  while !input.is_empty() {
     let mut handled = false
 
     // A. 如果输入以 "../" 或 "./" 开头，移除这些前缀
     if input.has_prefix("../") {
-      input = input.substring(start=3)
+      input = try! input[3:].to_string()
       handled = true
     } else if input.has_prefix("./") {
-      input = input.substring(start=2)
+      input = try! input[2:].to_string()
       handled = true
     }
 
     // B. 如果输入以 "/./" 或 "/." 开头
     if !handled && input.has_prefix("/./") {
-      input = "/" + input.substring(start=3)
+      input = "/" + (try! input[3:].to_string())
       handled = true
     } else if !handled && input == "/." {
       input = "/"
@@ -175,7 +181,7 @@ pub fn remove_dot_segments(path : String) -> String {
 
     // C. 如果输入以 "/../" 开头或等于 "/.."
     if !handled && input.has_prefix("/../") {
-      input = "/" + input.substring(start=4)
+      input = "/" + (try! input[4:].to_string())
       output = remove_last_segment(output)
       handled = true
     } else if !handled && input == "/.." {
@@ -194,13 +200,13 @@ pub fn remove_dot_segments(path : String) -> String {
     if !handled {
       if input.has_prefix("/") {
         // 查找第一个 / 后的下一个 /
-        let remaining = input.substring(start=1)
+        let remaining = try! input[1:].to_string()
         let slash_pos = remaining.find("/")
         match slash_pos {
           Some(pos) => {
             let actual_pos = pos + 1
-            output = output + input.substring(start=0, end=actual_pos)
-            input = input.substring(start=actual_pos)
+            output = output + (try! input[0:actual_pos].to_string())
+            input = try! input[actual_pos:].to_string()
           }
           None => {
             output = output + input
@@ -211,8 +217,8 @@ pub fn remove_dot_segments(path : String) -> String {
         let slash_pos = input.find("/")
         match slash_pos {
           Some(pos) => {
-            output = output + input.substring(start=0, end=pos)
-            input = input.substring(start=pos)
+            output = output + (try! input[0:pos].to_string())
+            input = try! input[pos:].to_string()
           }
           None => {
             output = output + input
@@ -225,7 +231,8 @@ pub fn remove_dot_segments(path : String) -> String {
   output
 }
 
-///| 移除输出路径中的最后一个段
+///|
+/// 移除输出路径中的最后一个段
 fn remove_last_segment(path : String) -> String {
   if path.is_empty() {
     return ""
@@ -243,13 +250,14 @@ fn remove_last_segment(path : String) -> String {
     i = i - 1
   }
   if last_slash >= 0 {
-    path.substring(start=0, end=last_slash)
+    try! path[0:last_slash].to_string()
   } else {
     ""
   }
 }
 
-///| URI连接工具
+///|
+/// URI连接工具
 pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
   // 检查基URI是否包含无效模式
   if base.contains(":::") {
@@ -295,7 +303,7 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
             scheme: "",
             authority: None,
             path: "",
-            query: Some(reference.substring(start=1)),
+            query: Some(try! reference[1:].to_string()),
             fragment: None,
           }
           match resolve_reference(base_uri, rel) {
@@ -314,7 +322,7 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
             authority: None,
             path: "",
             query: None,
-            fragment: Some(reference.substring(start=1)),
+            fragment: Some(try! reference[1:].to_string()),
           }
           match resolve_reference(base_uri, rel) {
             Ok(resolved) => {
@@ -345,7 +353,8 @@ pub fn join_uri(base : String, reference : String) -> Result[String, UriError] {
   }
 }
 
-///| 检查URI是否为另一个URI的子路径
+///|
+/// 检查URI是否为另一个URI的子路径
 pub fn is_subpath(parent : Uri, child : Uri) -> Bool {
   // 检查scheme和authority是否相同
   if parent.scheme != child.scheme {
@@ -364,7 +373,8 @@ pub fn is_subpath(parent : Uri, child : Uri) -> Bool {
   child.path.has_prefix(parent.path)
 }
 
-///| 引用解析器
+///|
+/// 引用解析器
 pub struct ReferenceResolver {
   base : Uri
 }
